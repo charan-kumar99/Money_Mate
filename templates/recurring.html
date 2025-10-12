@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Recurring Expenses - Expense Tracker Pro{% endblock %}
+
+{% block page_title %}Recurring Expenses{% endblock %}
+{% block page_subtitle %}Manage your subscription and recurring payments{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="main-heading">
+        <i class="fas fa-repeat"></i> Recurring Expenses
+    </h1>
+    <p class="sub-heading">Track subscriptions and regular payments</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Add Recurring Expense Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-plus-circle"></i> Add Recurring Expense
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" id="name" name="name" class="form-control" 
+                               placeholder="e.g., Netflix, Rent..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" 
+                               list="categoryList" placeholder="Select category" required>
+                        <datalist id="categoryList">
+                            <option value="Subscriptions">
+                            <option value="Bills & Utilities">
+                            <option value="Rent">
+                            <option value="Insurance">
+                            <option value="Loan Payment">
+                            {% for cat in categories %}
+                                <option value="{{ cat }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency }}</span>
+                            <input type="number" id="amount" name="amount" class="form-control" 
+                                   placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Frequency</label>
+                        <select id="frequency" name="frequency" class="form-select" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="next_due" class="form-label">Next Due Date</label>
+                        <input type="date" id="next_due" name="next_due" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus"></i> Add Recurring Expense
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Tips
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        Track all subscriptions in one place
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        Never forget a payment again
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        Easily spot unused subscriptions
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success"></i>
+                        Calculate monthly recurring costs
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Recurring Expenses List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-list"></i> Active Recurring Expenses
+                    <span class="badge bg-primary ms-2">{{ recurring_expenses|length }} active</span>
+                </div>
+                <div class="text-warning fw-bold">
+                    Monthly: {{ currency }}{{ "%.2f"|format(recurring_expenses|sum(attribute='amount') if recurring_expenses else 0) }}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if recurring_expenses %}
+                    {% for recurring in recurring_expenses %}
+                    <div class="recurring-item mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="mb-1">{{ recurring.name }}</h5>
+                                <span class="badge bg-info">{{ recurring.category }}</span>
+                                <span class="badge bg-secondary ms-1">{{ recurring.frequency|title }}</span>
+                            </div>
+                            <div class="text-end">
+                                <div class="h4 mb-0 text-primary">{{ currency }}{{ "%.2f"|format(recurring.amount) }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-muted small">
+                                <i class="fas fa-calendar-alt"></i>
+                                Next Due: <strong>{{ recurring.next_due.strftime('%d %b %Y') }}</strong>
+                                {% set days_until = (recurring.next_due - datetime.now().date()).days %}
+                                {% if days_until < 0 %}
+                                    <span class="badge bg-danger ms-2">Overdue</span>
+                                {% elif days_until == 0 %}
+                                    <span class="badge bg-warning ms-2">Due Today</span>
+                                {% elif days_until <= 7 %}
+                                    <span class="badge bg-warning ms-2">Due in {{ days_until }} days</span>
+                                {% else %}
+                                    <span class="badge bg-success ms-2">Due in {{ days_until }} days</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <form method="POST" action="{{ url_for('toggle_recurring', recurring_id=recurring.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Pause">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_recurring', recurring_id=recurring.id) }}" 
+                                      onsubmit="return confirm('Delete this recurring expense?');" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-repeat fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No recurring expenses yet</h5>
+                    <p class="text-muted">Add your subscriptions and recurring payments to track them easily.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set min date for next due to today
+    document.getElementById('next_due').setAttribute('min', new Date().toISOString().split('T')[0]);
+</script>
+{% endblock %}

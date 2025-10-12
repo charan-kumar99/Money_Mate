@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Money Mate{% endblock %}
+
+{% block content %}
+<!-- Analytics Header -->
+<div class="dashboard-header">
+    <h1 class="main-heading"><i class="bi bi-graph-up me-3"></i>Financial Analytics</h1>
+    <p class="sub-heading">Deep insights into your spending patterns and financial health</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-currency-rupee"></i>
+        </div>
+        <div class="stat-content">
+            <h3>₹{{ "%.2f"|format(total_expenses) }}</h3>
+            <p>Total Spent</p>
+        </div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <div class="stat-content">
+            <h3>{{ expense_count }}</h3>
+            <p>Total Transactions</p>
+        </div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="bi bi-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+            <h3>₹{{ "%.2f"|format(daily_avg) }}</h3>
+            <p>Daily Average</p>
+        </div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-icon">
+            <i class="bi bi-calendar-month"></i>
+        </div>
+        <div class="stat-content">
+            <h3>₹{{ "%.2f"|format(monthly_avg) }}</h3>
+            <p>Monthly Average</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row">
+    <!-- Category Breakdown -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-pie-chart text-primary"></i>Spending by Category
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-credit-card text-info"></i>Payment Methods
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trend -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-graph-up-arrow text-success"></i>Monthly Spending Trend
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Details -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table text-warning"></i>Category Breakdown Details
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total Amount</th>
+                        <th>Transactions</th>
+                        <th>Average</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in category_data %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary">{{ item.category }}</span>
+                        </td>
+                        <td class="fw-bold text-success">₹{{ "%.2f"|format(item.total) }}</td>
+                        <td>{{ item.count }}</td>
+                        <td class="text-info">₹{{ "%.2f"|format(item.avg) }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ "%.1f"|format(item.percentage) }}%</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryData = {{ category_chart_data | tojson }};
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(categoryData),
+            datasets: [{
+                data: Object.values(categoryData),
+                backgroundColor: [
+                    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+                    '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6'
+                ],
+                borderWidth: 2,
+                borderColor: '#1e293b'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#f1f5f9',
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Trend Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyData = {{ month_chart_data | tojson }};
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(monthlyData),
+            datasets: [{
+                label: 'Monthly Spending',
+                data: Object.values(monthlyData),
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderColor: '#6366f1',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) {
+                            return '₹' + value;
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Methods Chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    const paymentData = {{ payment_chart_data | tojson }};
+    new Chart(paymentCtx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(paymentData).map(key => key.charAt(0).toUpperCase() + key.slice(1)),
+            datasets: [{
+                data: Object.values(paymentData),
+                backgroundColor: [
+                    '#10b981', '#6366f1', '#f59e0b', '#ec4899'
+                ],
+                borderWidth: 2,
+                borderColor: '#1e293b'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#f1f5f9',
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

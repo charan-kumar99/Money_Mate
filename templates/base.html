@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Expense Tracker Pro{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <i class="fas fa-wallet me-2"></i>
+                    <span>ExpenseTracker Pro</span>
+                </a>
+            </div>
+            
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                        <i class="fas fa-home me-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-bar me-3"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'budgets' %}active{% endif %}" href="{{ url_for('budgets') }}">
+                        <i class="fas fa-chart-pie me-3"></i>
+                        <span>Budgets</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'savings' %}active{% endif %}" href="{{ url_for('savings') }}">
+                        <i class="fas fa-piggy-bank me-3"></i>
+                        <span>Savings Goals</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'income' %}active{% endif %}" href="{{ url_for('income') }}">
+                        <i class="fas fa-money-bill-wave me-3"></i>
+                        <span>Income</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'recurring' %}active{% endif %}" href="{{ url_for('recurring') }}">
+                        <i class="fas fa-repeat me-3"></i>
+                        <span>Recurring</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="date-display">
+                    <i class="fas fa-calendar me-2"></i>
+                    {{ datetime.now().strftime('%d %b %Y') }}
+                </div>
+                
+                <!-- Currency Selector -->
+                <div class="mt-3">
+                    <small class="text-muted d-block mb-2">Currency:</small>
+                    <div class="btn-group w-100">
+                        {% for curr in ['₹', '$', '€', '£', '¥'] %}
+                            <a href="{{ url_for('set_currency_route', currency=curr) }}" 
+                               class="btn btn-sm {% if currency == curr %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                {{ curr }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="page-title">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p>{% block page_subtitle %}Track and manage your expenses efficiently{% endblock %}</p>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Main Content Block -->
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='charts.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

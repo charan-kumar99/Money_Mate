@@ -1,136 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title> Edit Expense - Money Mate</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body>
-<div class="container py-4">
+{% extends "base.html" %}
 
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="container mt-3">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+{% block title %}Edit Expense - Expense Tracker Pro{% endblock %}
 
-    <!-- Header -->
-    <div class="header mb-4">
-        <h1 class="main-heading"> Edit Expense</h1>
-        <p class="sub-heading">Update your expense details</p>
-    </div>
+{% block page_title %}Edit Expense{% endblock %}
+{% block page_subtitle %}Update your expense details{% endblock %}
 
-    <!-- Navigation -->
-    <div class="mb-4">
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">
-            ← Back to Dashboard
-        </a>
-    </div>
-
-    <!-- Current Expense Info -->
-    <div class="card mb-4">
-        <div class="card-header section-heading"> Current Expense Details</div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="expense-info-box">
-                        <small class="text-muted"> Date</small>
-                        <div class="fw-bold">{{ expense.date.strftime('%d-%m-%Y') }}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="expense-info-box">
-                        <small class="text-muted"> Category</small>
-                        <div class="fw-bold">
-                            <span class="category-badge">{{ expense.category }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="expense-info-box">
-                        <small class="text-muted"> Amount</small>
-                        <div class="fw-bold amount-cell">₹{{ "%.2f"|format(expense.amount) }}</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="expense-info-box">
-                        <small class="text-muted"> Note</small>
-                        <div class="fw-bold">{{ expense.note if expense.note else '-' }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Form -->
-    <div class="card mb-4">
-        <div class="card-header section-heading"> Edit Expense Details</div>
-        <div class="card-body">
-            <form method="POST" class="row g-3" onsubmit="return validateForm()">
-                <div class="col-md-3">
-                    <label class="form-label"> Date</label>
-                    <input type="date" 
-                           name="date" 
-                           class="form-control" 
-                           required 
-                           value="{{ expense.date.strftime('%Y-%m-%d') }}" />
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label"> Category</label>
-                    <input type="text" 
-                           name="category" 
-                           class="form-control" 
-                           required 
-                           value="{{ expense.category }}" />
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label"> Amount (₹)</label>
-                    <input type="number" 
-                           step="0.01" 
-                           name="amount" 
-                           class="form-control" 
-                           required 
-                           min="0.01"
-                           value="{{ "%.2f"|format(expense.amount) }}" />
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label"> Note (Optional)</label>
-                    <input type="text" 
-                           name="note" 
-                           class="form-control" 
-                           value="{{ expense.note if expense.note else '' }}" />
-                </div>
-                <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-primary"> Update Expense</button>
-                    <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2"> Cancel</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="main-heading">
+        <i class="fas fa-edit"></i> Edit Expense
+    </h1>
+    <p class="sub-heading">Update your expense details</p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function validateForm() {
-        // Example validation: amount must be positive
-        const amount = document.querySelector('input[name="amount"]').value;
-        if (parseFloat(amount) <= 0) {
-            alert("Amount must be greater than 0");
-            return false;
-        }
-        return true;
-    }
-</script>
-</body>
-</html>
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-receipt"></i> Edit Expense Details
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" id="date" name="date" class="form-control" 
+                               value="{{ expense.date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" id="category" name="category" class="form-control" 
+                               list="categoryList" value="{{ expense.category }}" required>
+                        <datalist id="categoryList">
+                            <option value="Food & Dining">
+                            <option value="Transportation">
+                            <option value="Shopping">
+                            <option value="Entertainment">
+                            <option value="Bills & Utilities">
+                            <option value="Healthcare">
+                            <option value="Education">
+                            <option value="Travel">
+                            <option value="Personal Care">
+                            <option value="Other">
+                            {% for cat in categories %}
+                                <option value="{{ cat }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency }}</span>
+                            <input type="number" id="amount" name="amount" class="form-control" 
+                                   value="{{ expense.amount }}" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select id="payment_method" name="payment_method" class="form-select" required>
+                            <option value="cash" {% if expense.payment_method == 'cash' %}selected{% endif %}>Cash</option>
+                            <option value="credit_card" {% if expense.payment_method == 'credit_card' %}selected{% endif %}>Credit Card</option>
+                            <option value="debit_card" {% if expense.payment_method == 'debit_card' %}selected{% endif %}>Debit Card</option>
+                            <option value="bank_transfer" {% if expense.payment_method == 'bank_transfer' %}selected{% endif %}>Bank Transfer</option>
+                            <option value="digital_wallet" {% if expense.payment_method == 'digital_wallet' %}selected{% endif %}>Digital Wallet</option>
+                            <option value="other" {% if expense.payment_method == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note (Optional)</label>
+                        <textarea id="note" name="note" class="form-control" rows="3" 
+                                  placeholder="Add a note...">{{ expense.note or '' }}</textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Update Expense
+                        </button>
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

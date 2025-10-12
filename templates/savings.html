@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Savings Goals - Expense Tracker Pro{% endblock %}
+
+{% block page_title %}Savings Goals{% endblock %}
+{% block page_subtitle %}Track your progress towards financial goals{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="main-heading">
+        <i class="fas fa-piggy-bank"></i> Savings Goals
+    </h1>
+    <p class="sub-heading">Track your progress towards financial goals</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Savings Goals -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-target"></i> My Savings Goals</span>
+                <span class="badge bg-primary">{{ savings_goals|length }} Goals</span>
+            </div>
+            <div class="card-body">
+                {% if savings_goals %}
+                    {% for goal in savings_goals %}
+                    <div class="savings-goal mb-4 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">{{ goal.name }}</h5>
+                            <div>
+                                <span class="badge bg-{{ 'success' if goal.current_amount >= goal.target_amount else 'primary' }}">
+                                    {{ "%.1f"|format((goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0) }}%
+                                </span>
+                                <form action="/delete_savings/{{ goal.id }}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this savings goal?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mb-2" style="height: 12px;">
+                            <div class="progress-bar bg-success" 
+                                 role="progressbar" 
+                                 style="width: {{ (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 }}%"
+                                 aria-valuenow="{{ goal.current_amount }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ goal.target_amount }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Current</small>
+                                <div class="fw-bold">{{ currency }}{{ "%.2f"|format(goal.current_amount) }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Target</small>
+                                <div class="fw-bold">{{ currency }}{{ "%.2f"|format(goal.target_amount) }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if goal.deadline %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Deadline: {{ goal.deadline.strftime('%d %b %Y') }}
+                            </small>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" data-bs-target="#updateGoalModal{{ goal.id }}">
+                                <i class="fas fa-plus"></i> Update
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" data-bs-target="#updateGoalModal{{ goal.id }}">
+                                <i class="fas fa-plus"></i> Update
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Update Goal Modal -->
+                    <div class="modal fade" id="updateGoalModal{{ goal.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Update {{ goal.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="/update_savings/{{ goal.id }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="current_amount{{ goal.id }}" class="form-label">Current Amount ({{ currency }})</label>
+                                            <input type="number" id="current_amount{{ goal.id }}" name="current_amount" 
+                                                   class="form-control" value="{{ goal.current_amount }}" step="0.01" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Update Goal</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-piggy-bank display-1 text-muted"></i>
+                    <h5 class="mt-3">No savings goals yet</h5>
+                    <p class="text-muted">Create your first savings goal to start tracking your progress!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Create New Goal -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-plus-circle"></i> Create New Goal
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Goal Name</label>
+                        <input type="text" id="name" name="name" class="form-control" 
+                               placeholder="e.g., New Laptop, Vacation..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="target_amount" class="form-label">Target Amount ({{ currency }})</label>
+                        <input type="number" id="target_amount" name="target_amount" class="form-control" 
+                               placeholder="0.00" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="current_amount" class="form-label">Current Amount ({{ currency }})</label>
+                        <input type="number" id="current_amount" name="current_amount" class="form-control" 
+                               placeholder="0.00" step="0.01" min="0" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="deadline" class="form-label">Deadline (Optional)</label>
+                        <input type="date" id="deadline" name="deadline" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus"></i> Create Goal
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Overall Progress -->
+        {% if savings_goals %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i> Overall Progress
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <h3>{{ currency }}{{ "%.2f"|format(total_current) }}/{{ currency }}{{ "%.2f"|format(total_target) }}</h3>
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ (total_current / total_target * 100) if total_target > 0 else 0 }}%">
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0">
+                        {{ "%.1f"|format((total_current / total_target * 100) if total_target > 0 else 0) }}% of total target
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Savings Tips -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-lightbulb"></i> Savings Tips
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Set specific, achievable goals</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Automate your savings</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Track progress regularly</li>
+                    <li class="mb-2"><i class="fas fa-check text-success"></i> Celebrate small milestones</li>
+                    <li><i class="fas fa-check text-success"></i> Adjust goals as needed</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
