@@ -78,6 +78,17 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
+### Step 2: Create Virtual Environment
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
 ### Step 3: Install Dependencies
 ```bash
 pip install flask flask-sqlalchemy flask-migrate flask-wtf
