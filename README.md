@@ -1,49 +1,48 @@
-```markdown
 # 💰 Money Mate - Personal Finance Manager
 
 A comprehensive, feature-rich personal finance management application built with Flask, featuring expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management.
 
 ## 🚀 New Features Added
 
-### 1. **Income Tracking** 📈
+### 1. Income Tracking 📈
 - Track income from multiple sources (Salary, Freelance, Business, etc.)
 - View total income vs expenses
 - Calculate net savings automatically
 - Monthly income trend charts
 
-### 2. **Recurring Expenses** 🔄
+### 2. Recurring Expenses 🔄
 - Manage subscriptions and recurring payments
 - Track due dates with reminders
 - Pause/activate recurring expenses
 - Calculate total monthly recurring costs
 - Visual indicators for due/overdue payments
 
-### 3. **Multi-Currency Support** 💱
+### 3. Multi-Currency Support 💱
 - Support for ₹ (INR), $ (USD), € (EUR), £ (GBP), ¥ (JPY)
 - Easy currency switching from sidebar
 - Currency preference stored in session
 
-### 4. **Enhanced Analytics** 📊
+### 4. Enhanced Analytics 📊
 - Income vs Expenses comparison charts
 - 12-month trend analysis
 - Category breakdown with percentages
 - Payment method distribution
 - Daily, weekly, and monthly averages
 
-### 5. **Improved Budget Management** 💼
+### 5. Improved Budget Management 💼
 - Visual progress bars with color coding
 - Total budget overview
 - Real-time spending tracking
 - Budget alerts (80%, 100% thresholds)
 
-### 6. **Enhanced Savings Goals** 🎯
+### 6. Enhanced Savings Goals 🎯
 - Progress tracking with visual indicators
 - Deadline management with countdown
 - Multiple concurrent goals
 - Completed goal celebrations
 - Overall progress calculation
 
-### 7. **Better User Experience** ✨
+### 7. Better User Experience ✨
 - Auto-dismissing flash messages
 - Smooth animations and transitions
 - Improved card layouts
@@ -51,7 +50,7 @@ A comprehensive, feature-rich personal finance management application built with
 - Loading states and error handling
 - Responsive mobile design
 
-### 8. **Security Improvements** 🔒
+### 8. Security Improvements 🔒
 - CSRF protection on all forms
 - Input sanitization
 - SQL injection prevention
@@ -63,14 +62,10 @@ A comprehensive, feature-rich personal finance management application built with
 - Python 3.8+
 - pip (Python package manager)
 
-### Step 1: Clone or Download the Project
+### Step 1: Clone the Project
 ```bash
-# If using git
 git clone https://github.com/charan-kumar99/Money_Mate.git
 cd Money_Mate
-
-# Or simply extract the downloaded files
-```
 
 ### Step 2: Create Virtual Environment
 ```bash
@@ -341,4 +336,3 @@ If you encounter any issues:
 **Status:** ✅ Production Ready - All bugs fixed and tested!
 
 Happy expense tracking! 💰📊✨
-```
