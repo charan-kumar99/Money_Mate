@@ -1,6 +1,53 @@
-# 💰 Money Mate - Personal Finance Manager
+# 💰 Money Mate - Personal Finance Management API & Web Application
 
-A comprehensive, feature-rich personal finance management application built with Flask, featuring expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management.
+A comprehensive RESTful API and web application built with Flask, providing a powerful backend for personal finance management. Features both API endpoints and web interface for expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management.
+
+## 🔗 API Documentation
+
+### Base URL
+```
+http://localhost:5000/api/v1
+```
+
+### Authentication
+```http
+Authorization: Bearer YOUR_API_TOKEN
+```
+
+### API Endpoints
+
+#### Expenses
+```http
+GET    /api/v1/expenses         # List all expenses
+POST   /api/v1/expenses         # Create new expense
+GET    /api/v1/expenses/{id}    # Get single expense
+PUT    /api/v1/expenses/{id}    # Update expense
+DELETE /api/v1/expenses/{id}    # Delete expense
+```
+
+#### Income
+```http
+GET    /api/v1/income          # List all income
+POST   /api/v1/income          # Add new income
+GET    /api/v1/income/{id}     # Get single income record
+PUT    /api/v1/income/{id}     # Update income
+DELETE /api/v1/income/{id}     # Delete income
+```
+
+#### Example API Response
+```json
+{
+    "status": "success",
+    "data": {
+        "id": 1,
+        "date": "2025-01-15",
+        "category": "Food & Dining",
+        "amount": 25.50,
+        "note": "Lunch at cafe",
+        "payment_method": "credit_card",
+        "created_at": "2025-01-15T12:00:00Z"
+    }
+}
 
 ## 🚀 New Features Added
 
@@ -91,7 +138,14 @@ source venv/bin/activate
 
 ### Step 3: Install Dependencies
 ```bash
+# Core dependencies
 pip install flask flask-sqlalchemy flask-migrate flask-wtf
+
+# API related dependencies
+pip install flask-jwt-extended flask-cors flask-limiter flask-restful
+
+# Additional utilities
+pip install python-dotenv redis requests
 ```
 
 ### Step 4: Initialize Database
@@ -187,14 +241,31 @@ expense-tracker-pro/
 
 ## 🔧 Configuration
 
+### API Configuration
+```python
+# In app.py
+# JWT Configuration
+JWT_SECRET_KEY = 'your-jwt-secret-key-here'
+JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+
+# Rate Limiting
+RATELIMIT_DEFAULT = "100 per minute"
+RATELIMIT_STORAGE_URL = "redis://localhost:6379/0"
+
+# CORS Configuration
+CORS_ORIGINS = ['http://localhost:3000', 'https://yourdomain.com']
+```
+
 ### Change Secret Key (Important for Production!)
 In `app.py`, change:
 ```python
 app.config['SECRET_KEY'] = 'your_secret_key_here_change_in_production'
+JWT_SECRET_KEY = 'your-jwt-secret-key-here'
 ```
-To a strong, random secret key:
+To strong, random secret keys:
 ```python
 app.config['SECRET_KEY'] = 'your-actual-secret-key-here'
+JWT_SECRET_KEY = 'your-actual-jwt-secret-key-here'
 ```
 
 ### Database Configuration
@@ -266,14 +337,28 @@ if __name__ == "__main__":
 
 ## 🔐 Security Notes
 
+### API Security
+- ✅ JWT Authentication for API endpoints
+- ✅ Rate limiting protection (100 requests per minute)
+- ✅ CORS policy configuration
+- ✅ API request validation
+- ✅ API response sanitization
+- ✅ Bearer token authentication
+
+### Web Application Security
 - ✅ CSRF protection enabled on all forms
 - ✅ SQL injection prevention through SQLAlchemy ORM
 - ✅ Input validation and sanitization
 - ✅ Secure session management
-- ⚠️ Change SECRET_KEY in production
+- ✅ XSS protection
+
+### Production Considerations
+- ⚠️ Change SECRET_KEY and JWT_SECRET_KEY in production
+- ⚠️ Configure proper CORS origins
 - ⚠️ Set debug=False in production
-- ⚠️ Use HTTPS in production
-- ⚠️ Implement user authentication for multi-user environments
+- ⚠️ Use HTTPS/SSL in production
+- ⚠️ Set up proper API rate limiting
+- ⚠️ Implement proper error logging
 
 ## 📱 Browser Support
 

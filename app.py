@@ -20,12 +20,41 @@ db.init_app(app)
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
 
-# Default currency - can be changed by user
+# Currency conversion rates (base currency: INR)
+CURRENCY_RATES = {
+    '₹': {'symbol': '₹', 'name': 'INR', 'rate': 1.0},
+    '$': {'symbol': '$', 'name': 'USD', 'rate': 0.012},  # 1 INR = 0.012 USD
+    '€': {'symbol': '€', 'name': 'EUR', 'rate': 0.011},  # 1 INR = 0.011 EUR
+    '£': {'symbol': '£', 'name': 'GBP', 'rate': 0.0095}, # 1 INR = 0.0095 GBP
+    '¥': {'symbol': '¥', 'name': 'JPY', 'rate': 1.78}    # 1 INR = 1.78 JPY
+}
+
 def get_currency():
     return session.get('currency', '₹')
 
 def set_currency(currency):
     session['currency'] = currency
+
+def get_currency_rate(currency):
+    """Get conversion rate for selected currency"""
+    return CURRENCY_RATES.get(currency, CURRENCY_RATES['₹'])['rate']
+
+def convert_amount(amount, target_currency='₹'):
+    """Convert amount from INR to target currency"""
+    rate = get_currency_rate(target_currency)
+    return float(amount) * rate
+
+def get_conversion_info(currency):
+    """Get readable conversion information"""
+    if currency == '₹':
+        return None
+    rate = CURRENCY_RATES[currency]['rate']
+    name = CURRENCY_RATES[currency]['name']
+    if currency == '¥':
+        return f"1 INR = {rate:.2f} {name}"
+    else:
+        reverse_rate = 1 / rate
+        return f"1 {name} = ₹{reverse_rate:.2f}"
 
 def get_month_range(year, month):
     """Get the first and last day of a given month"""
@@ -37,10 +66,13 @@ def get_month_range(year, month):
 @app.context_processor
 def inject_global_vars():
     """Inject global variables into all templates"""
+    currency = get_currency()
     return {
         'datetime': datetime,
-        'currency': get_currency(),
-        'get_currency': get_currency  # Make the function available in templates
+        'currency': currency,
+        'get_currency': get_currency,
+        'conversion_info': get_conversion_info(currency),
+        'currency_name': CURRENCY_RATES[currency]['name']
     }
 
 @app.route("/set_currency/<currency>")
@@ -49,7 +81,7 @@ def set_currency_route(currency):
     valid_currencies = ['₹', '$', '€', '£', '¥']
     if currency in valid_currencies:
         set_currency(currency)
-        flash(f"Currency changed to {currency}", "success")
+        flash(f"Currency changed to {CURRENCY_RATES[currency]['name']} ({currency})", "success")
     return redirect(request.referrer or '/')
 
 @app.route("/", methods=["GET", "POST"])
@@ -146,7 +178,10 @@ def index():
         expenses = expenses.order_by(Expense.category.asc())
     
     expenses = expenses.all()
-    total = sum(float(e.amount) for e in expenses)
+    
+    # Convert amounts to selected currency
+    currency = get_currency()
+    total = sum(convert_amount(e.amount, currency) for e in expenses)
     
     # Get all categories for dropdown
     all_expenses = Expense.query.all()
@@ -156,8 +191,8 @@ def index():
     category_totals = defaultdict(float)
     payment_totals = defaultdict(float)
     for e in expenses:
-        category_totals[e.category] += float(e.amount)
-        payment_totals[e.payment_method] += float(e.amount)
+        category_totals[e.category] += convert_amount(e.amount, currency)
+        payment_totals[e.payment_method] += convert_amount(e.amount, currency)
     
     top_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)[:5]
     
@@ -178,12 +213,13 @@ def index():
             Expense.date <= end
         ).scalar() or 0
         month_name = start.strftime('%b %Y')
+        converted_total = convert_amount(month_total, currency)
         monthly_data.append({
             'month': month_name,
-            'total': float(month_total)
+            'total': converted_total
         })
         monthly_labels.append(month_name)
-        monthly_totals.append(float(month_total))
+        monthly_totals.append(converted_total)
     
     # Get income and expenses for current month
     first_day_of_month = today.replace(day=1)
@@ -195,11 +231,25 @@ def index():
         Expense.date >= first_day_of_month
     ).scalar() or 0
     
-    net_savings = float(month_income) - float(month_expenses_total)
+    month_income_converted = convert_amount(month_income, currency)
+    month_expenses_converted = convert_amount(month_expenses_total, currency)
+    net_savings = month_income_converted - month_expenses_converted
+    
+    # Convert expense amounts for display
+    expense_list = []
+    for e in expenses:
+        expense_list.append({
+            'id': e.id,
+            'date': e.date,
+            'category': e.category,
+            'amount': convert_amount(e.amount, currency),
+            'note': e.note,
+            'payment_method': e.payment_method
+        })
     
     return render_template(
         "index.html",
-        expenses=expenses,
+        expenses=expense_list,
         categories=categories,
         category_filter=category_filter,
         date_filter=date_filter,
@@ -215,29 +265,32 @@ def index():
         monthly_totals=monthly_totals,
         expense_count=len(expenses),
         payment_totals=payment_totals,
-        month_income=float(month_income),
+        month_income=month_income_converted,
         net_savings=net_savings
     )
 
 @app.route("/analytics")
 def analytics():
     """Comprehensive analytics and insights page"""
+    currency = get_currency()
+    
     all_expenses = Expense.query.all()
-    total_expenses = sum(float(e.amount) for e in all_expenses)
+    total_expenses = sum(convert_amount(e.amount, currency) for e in all_expenses)
     expense_count = len(all_expenses)
     
     # Get total income
     all_income = Income.query.all()
-    total_income = sum(float(i.amount) for i in all_income)
+    total_income = sum(convert_amount(i.amount, currency) for i in all_income)
     
     category_totals = defaultdict(float)
     category_counts = defaultdict(int)
     payment_totals = defaultdict(float)
     
     for e in all_expenses:
-        category_totals[e.category] += float(e.amount)
+        converted_amount = convert_amount(e.amount, currency)
+        category_totals[e.category] += converted_amount
         category_counts[e.category] += 1
-        payment_totals[e.payment_method] += float(e.amount)
+        payment_totals[e.payment_method] += converted_amount
     
     category_data = [
         {
@@ -274,12 +327,15 @@ def analytics():
         
         month_count = Expense.query.filter(Expense.date >= start, Expense.date <= end).count()
         
+        month_total_converted = convert_amount(month_total, currency)
+        month_income_converted = convert_amount(month_income, currency)
+        
         monthly_trend.append({
             'month': start.strftime('%b %Y'),
-            'total': float(month_total),
-            'income': float(month_income),
+            'total': month_total_converted,
+            'income': month_income_converted,
             'count': month_count,
-            'savings': float(month_income) - float(month_total)
+            'savings': month_income_converted - month_total_converted
         })
     
     # Calculate averages
@@ -318,6 +374,7 @@ def analytics():
 @app.route("/budgets", methods=["GET", "POST"])
 def budgets():
     """Budget management page"""
+    currency = get_currency()
     today = datetime.now()
     current_month = today.month
     current_year = today.year
@@ -369,16 +426,17 @@ def budgets():
     # Calculate category spending
     category_spending = defaultdict(float)
     for e in month_expenses:
-        category_spending[e.category] += float(e.amount)
+        category_spending[e.category] += convert_amount(e.amount, currency)
     
     budget_data = []
     total_budget = 0
     total_spent = 0
     
     for budget in budgets:
+        budget_amount = convert_amount(budget.amount, currency)
         spent = category_spending.get(budget.category, 0)
-        remaining = float(budget.amount) - spent
-        percentage = (spent / float(budget.amount) * 100) if float(budget.amount) > 0 else 0
+        remaining = budget_amount - spent
+        percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0
         
         # Determine status color
         status = "success" if percentage < 80 else "warning" if percentage < 100 else "danger"
@@ -386,14 +444,14 @@ def budgets():
         budget_data.append({
             'id': budget.id,
             'category': budget.category,
-            'budget': float(budget.amount),
+            'budget': budget_amount,
             'spent': spent,
             'remaining': remaining,
             'percentage': percentage,
             'status': status
         })
         
-        total_budget += float(budget.amount)
+        total_budget += budget_amount
         total_spent += spent
     
     all_expenses = Expense.query.all()
@@ -412,6 +470,8 @@ def budgets():
 @app.route("/savings", methods=["GET", "POST"])
 def savings():
     """Savings goals management"""
+    currency = get_currency()
+    
     if request.method == "POST":
         try:
             name = request.form["name"].strip()
@@ -445,13 +505,31 @@ def savings():
     
     savings_goals = SavingsGoal.query.all()
     
-    # Calculate total savings progress
-    total_target = sum(float(g.target_amount) for g in savings_goals)
-    total_current = sum(float(g.current_amount) for g in savings_goals)
+    # Convert amounts to selected currency
+    goals_list = []
+    total_target = 0
+    total_current = 0
+    
+    for goal in savings_goals:
+        target = convert_amount(goal.target_amount, currency)
+        current = convert_amount(goal.current_amount, currency)
+        
+        goals_list.append({
+            'id': goal.id,
+            'name': goal.name,
+            'target_amount': target,
+            'current_amount': current,
+            'deadline': goal.deadline,
+            'progress_percentage': (current / target * 100) if target > 0 else 0,
+            'is_completed': current >= target
+        })
+        
+        total_target += target
+        total_current += current
     
     return render_template(
         "savings.html",
-        savings_goals=savings_goals,
+        savings_goals=goals_list,
         total_target=total_target,
         total_current=total_current
     )
@@ -459,6 +537,8 @@ def savings():
 @app.route("/income", methods=["GET", "POST"])
 def income():
     """Income tracking and management"""
+    currency = get_currency()
+    
     if request.method == "POST":
         try:
             date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
@@ -489,10 +569,11 @@ def income():
     
     # Get all income records
     income_records = Income.query.order_by(Income.date.desc()).all()
-    total_income = sum(float(i.amount) for i in income_records)
+    total_income = sum(convert_amount(i.amount, currency) for i in income_records)
     
     # Get all expenses for comparison
-    total_expenses = sum(float(e.amount) for e in Expense.query.all())
+    all_expenses = Expense.query.all()
+    total_expenses = sum(convert_amount(e.amount, currency) for e in all_expenses)
     net_savings = total_income - total_expenses
     
     # Monthly income trend
@@ -512,12 +593,23 @@ def income():
         month_name = start.strftime('%b %Y')
         monthly_income.append({
             'month': month_name,
-            'total': float(month_total)
+            'total': convert_amount(month_total, currency)
+        })
+    
+    # Convert income amounts for display
+    income_list = []
+    for i in income_records:
+        income_list.append({
+            'id': i.id,
+            'date': i.date,
+            'source': i.source,
+            'amount': convert_amount(i.amount, currency),
+            'note': i.note
         })
     
     return render_template(
         "income.html",
-        income_records=income_records,
+        income_records=income_list,
         total_income=total_income,
         total_expenses=total_expenses,
         net_savings=net_savings,
@@ -527,6 +619,8 @@ def income():
 @app.route("/recurring", methods=["GET", "POST"])
 def recurring():
     """Recurring expenses management"""
+    currency = get_currency()
+    
     if request.method == "POST":
         try:
             name = request.form["name"].strip()
@@ -562,9 +656,22 @@ def recurring():
     all_expenses = Expense.query.all()
     categories = sorted(set(e.category for e in all_expenses))
     
+    # Convert amounts for display
+    recurring_list = []
+    for r in recurring_expenses:
+        recurring_list.append({
+            'id': r.id,
+            'name': r.name,
+            'category': r.category,
+            'amount': convert_amount(r.amount, currency),
+            'frequency': r.frequency,
+            'next_due': r.next_due,
+            'is_active': r.is_active
+        })
+    
     return render_template(
         "recurring.html",
-        recurring_expenses=recurring_expenses,
+        recurring_expenses=recurring_list,
         categories=categories
     )
 
@@ -788,6 +895,7 @@ def edit_expense(expense_id):
     expense = Expense.query.get_or_404(expense_id)
     all_expenses = Expense.query.all()
     categories = sorted(set(e.category for e in all_expenses))
+    currency = get_currency()
     
     if request.method == "POST":
         try:
@@ -811,7 +919,17 @@ def edit_expense(expense_id):
             print("Error updating expense:", e)
             flash("Failed to update expense.", "danger")
     
-    return render_template("edit.html", expense=expense, categories=categories)
+    # Convert expense amount for display
+    expense_data = {
+        'id': expense.id,
+        'date': expense.date,
+        'category': expense.category,
+        'amount': convert_amount(expense.amount, currency),
+        'note': expense.note,
+        'payment_method': expense.payment_method
+    }
+    
+    return render_template("edit.html", expense=expense_data, categories=categories)
 
 @app.route("/delete/<int:expense_id>", methods=["POST"])
 def delete_expense(expense_id):
@@ -831,10 +949,11 @@ def delete_expense(expense_id):
 @app.route("/api/chart-data")
 def chart_data():
     """API endpoint for chart data"""
+    currency = get_currency()
     all_expenses = Expense.query.all()
     category_totals = defaultdict(float)
     for e in all_expenses:
-        category_totals[e.category] += float(e.amount)
+        category_totals[e.category] += convert_amount(e.amount, currency)
     
     return jsonify({
         'categories': list(category_totals.keys()),
@@ -844,6 +963,7 @@ def chart_data():
 @app.route("/api/expense-stats")
 def expense_stats():
     """API endpoint for expense statistics"""
+    currency = get_currency()
     today = datetime.now().date()
     week_ago = today - timedelta(days=7)
     month_ago = today - timedelta(days=30)
