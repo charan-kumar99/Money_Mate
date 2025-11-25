@@ -392,7 +392,8 @@ body {
     margin-bottom: 0.9375rem;
 }
 
-.form-control, .form-select {
+.form-control,
+.form-select {
     width: 100%;
     padding: 1.25rem 1.5625rem;
     background: var(--dark-3);
@@ -404,7 +405,8 @@ body {
     transition: all 0.3s ease;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 5px rgba(0, 217, 184, 0.15);
@@ -875,13 +877,34 @@ body {
 }
 
 /* Utility Classes */
-.text-primary { color: var(--primary) !important; }
-.text-success { color: var(--success) !important; }
-.text-warning { color: var(--warning) !important; }
-.text-danger { color: var(--danger) !important; }
-.text-info { color: var(--info) !important; }
-.text-muted { color: var(--text-secondary) !important; }
-.fw-bold { font-weight: 700 !important; }
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-warning {
+    color: var(--warning) !important;
+}
+
+.text-danger {
+    color: var(--danger) !important;
+}
+
+.text-info {
+    color: var(--info) !important;
+}
+
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.fw-bold {
+    font-weight: 700 !important;
+}
+
 .text-truncate {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -898,6 +921,7 @@ body {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -928,7 +952,7 @@ body {
     html {
         zoom: 1;
     }
-    
+
     .sidebar {
         width: 100%;
         height: auto;
@@ -955,5 +979,236 @@ body {
         flex-direction: column;
         gap: 1rem;
         align-items: flex-start;
+    }
+}
+
+/* ==================== CUSTOM MODALS ==================== */
+.custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeInModal 0.3s ease;
+}
+
+.custom-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes fadeInModal {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content-custom {
+    background: linear-gradient(135deg, #141824 0%, #0a0e1a 100%);
+    border: 2px solid rgba(0, 217, 184, 0.3);
+    border-radius: 25px;
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 217, 184, 0.3);
+    animation: slideUpModal 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-modal-content {
+    max-width: 600px;
+}
+
+@keyframes slideUpModal {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid rgba(0, 217, 184, 0.2);
+    padding-bottom: 1.25rem;
+}
+
+.modal-header-custom h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #ff6b9d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    transform: rotate(90deg) scale(1.2);
+}
+
+.modal-body-custom {
+    color: #8891a8;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.modal-body-custom ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.modal-body-custom li {
+    padding: 0.75rem 0;
+    color: #8891a8;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-body-custom li:before {
+    content: "✓";
+    color: #00d9b8;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.modal-footer-custom {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.modal-btn-confirm {
+    background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+    color: white;
+    box-shadow: 0 5px 25px rgba(255, 107, 157, 0.3);
+}
+
+.modal-btn-confirm:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 35px rgba(255, 107, 157, 0.5);
+}
+
+.modal-btn-cancel {
+    background: transparent;
+    border: 2px solid #00d9b8;
+    color: #00d9b8;
+    transition: all 0.3s ease;
+}
+
+.modal-btn-cancel:hover {
+    background: #00d9b8;
+    color: #0a0e1a;
+}
+
+.modal-btn-close {
+    background: linear-gradient(135deg, #00d9b8, #4dabf7);
+    color: white;
+    box-shadow: 0 5px 25px rgba(0, 217, 184, 0.3);
+}
+
+.modal-btn-close:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 35px rgba(0, 217, 184, 0.5);
+}
+
+/* ==================== DROPDOWN STYLING ==================== */
+select.form-select {
+    background-color: var(--dark-3);
+    color: white;
+    border: 2px solid rgba(0, 217, 184, 0.2);
+}
+
+select.form-select option {
+    background: #1e2330;
+    color: white;
+    padding: 10px;
+}
+
+select.form-select option:hover {
+    background: #00d9b8;
+    color: #0a0e1a;
+}
+
+select.form-select option:checked {
+    background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+    color: white;
+}
+
+select.form-select:focus {
+    border-color: #00d9b8;
+    box-shadow: 0 0 0 5px rgba(0, 217, 184, 0.15);
+}
+
+/* ==================== CONFIRMATION MODALS ==================== */
+.confirm-modal {
+    --i: 1;
+}
+
+/* Responsive Design for Modals */
+@media (max-width: 768px) {
+    .modal-content-custom {
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    .modal-header-custom h2 {
+        font-size: 1.5rem;
+    }
+
+    .modal-body-custom {
+        font-size: 1rem;
+    }
+
+    .modal-footer-custom {
+        flex-direction: column;
+    }
+
+    .modal-btn {
+        width: 100%;
     }
 }

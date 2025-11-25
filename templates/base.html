@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -20,61 +24,67 @@
                     <span>Money Mate</span>
                 </a>
             </div>
-            
+
             <ul class="sidebar-nav">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                    <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"
+                        href="{{ url_for('index') }}">
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">
+                    <a class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}"
+                        href="{{ url_for('analytics') }}">
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'budgets' %}active{% endif %}" href="{{ url_for('budgets') }}">
+                    <a class="nav-link {% if request.endpoint == 'budgets' %}active{% endif %}"
+                        href="{{ url_for('budgets') }}">
                         <i class="fas fa-chart-pie"></i>
                         <span>Budgets</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'savings' %}active{% endif %}" href="{{ url_for('savings') }}">
+                    <a class="nav-link {% if request.endpoint == 'savings' %}active{% endif %}"
+                        href="{{ url_for('savings') }}">
                         <i class="fas fa-piggy-bank"></i>
                         <span>Savings Goals</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'income' %}active{% endif %}" href="{{ url_for('income') }}">
+                    <a class="nav-link {% if request.endpoint == 'income' %}active{% endif %}"
+                        href="{{ url_for('income') }}">
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Income</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'recurring' %}active{% endif %}" href="{{ url_for('recurring') }}">
+                    <a class="nav-link {% if request.endpoint == 'recurring' %}active{% endif %}"
+                        href="{{ url_for('recurring') }}">
                         <i class="fas fa-repeat"></i>
                         <span>Recurring</span>
                     </a>
                 </li>
             </ul>
-            
+
             <div class="sidebar-footer">
                 <div class="date-display">
                     <i class="fas fa-calendar me-2"></i>
                     {{ datetime.now().strftime('%d %b %Y') }}
                 </div>
-                
+
                 <!-- Currency Selector -->
                 <div class="currency-selector-wrapper">
                     <div class="currency-selector-title">Currency</div>
                     <div class="btn-group">
                         {% for curr in ['₹', '$', '€', '£', '¥'] %}
-                            <a href="{{ url_for('set_currency_route', currency=curr) }}" 
-                               class="currency-btn {% if currency == curr %}active{% endif %}">
-                                {{ curr }}
-                            </a>
+                        <a href="{{ url_for('set_currency_route', currency=curr) }}"
+                            class="currency-btn {% if currency == curr %}active{% endif %}">
+                            {{ curr }}
+                        </a>
                         {% endfor %}
                     </div>
                 </div>
@@ -89,10 +99,10 @@
                     <h1>{% block page_title %}Dashboard{% endblock %}</h1>
                     <p>{% block page_subtitle %}Track and manage your expenses efficiently{% endblock %}</p>
                 </div>
-                
+
                 {% if conversion_info %}
                 <div class="conversion-info">
-                    💱 <strong>{{ conversion_info }}</strong>
+                    💰 <strong>{{ conversion_info }}</strong>
                 </div>
                 {% endif %}
             </div>
@@ -101,17 +111,18 @@
             <div class="content-area">
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                <strong>
-                                    {% if category == 'success' %}✓{% elif category == 'danger' %}✗{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
-                                </strong>
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <strong>
+                        {% if category == 'success' %}✓{% elif category == 'danger' %}✗{% elif category == 'warning'
+                        %}⚠{% else %}ℹ{% endif %}
+                    </strong>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
 
                 <!-- Main Content Block -->
@@ -152,7 +163,8 @@
                                 Money Mate
                             </div>
                             <p class="footer-description">
-                                Your personal finance companion. Track expenses, set budgets, achieve your savings goals, and take control of your financial future.
+                                Your personal finance companion. Track expenses, set budgets, achieve your savings
+                                goals, and take control of your financial future.
                             </p>
                             <p class="footer-contact">
                                 Email: <a href="mailto:charansuvarna99@gmail.com">charansuvarna99@gmail.com</a><br>
@@ -165,7 +177,8 @@
                                 <a href="https://www.instagram.com/chanu_xd/" class="social-link" title="Instagram">
                                     <i class="fab fa-instagram"></i>
                                 </a>
-                                <a href="https://www.linkedin.com/in/charan-kumar-9b20a8378" class="social-link" title="LinkedIn">
+                                <a href="https://www.linkedin.com/in/charan-kumar-9b20a8378" class="social-link"
+                                    title="LinkedIn">
                                     <i class="fab fa-linkedin-in"></i>
                                 </a>
                             </div>
@@ -207,25 +220,25 @@
                             <h4>Resources</h4>
                             <ul class="footer-links">
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('helpModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         Help Center
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('blogModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         Blog
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('tipsModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         Financial Tips
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('communityModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         Community
                                     </a>
@@ -238,27 +251,21 @@
                             <h4>Company</h4>
                             <ul class="footer-links">
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('aboutModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         About Us
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('contactModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
                                         Contact
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#">
+                                    <a href="#" onclick="openModal('privacyModal'); return false;">
                                         <i class="fas fa-chevron-right"></i>
-                                        Careers
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <i class="fas fa-chevron-right"></i>
-                                        Partner With Us
+                                        Privacy Policy
                                     </a>
                                 </li>
                             </ul>
@@ -272,9 +279,9 @@
                             Developed with ❤️ by Charan Kumar
                         </div>
                         <div class="footer-legal">
-                            <a href="#">Privacy Policy</a>
-                            <a href="#">Terms of Service</a>
-                            <a href="#">Cookie Policy</a>
+                            <a href="#" onclick="openModal('privacyModal'); return false;">Privacy Policy</a>
+                            <a href="#" onclick="openModal('termsModal'); return false;">Terms of Service</a>
+                            <a href="#" onclick="openModal('cookieModal'); return false;">Cookie Policy</a>
                         </div>
                     </div>
                 </div>
@@ -282,11 +289,253 @@
         </div>
     </div>
 
+    <!-- Custom Modals -->
+    <!-- Help Center Modal -->
+    <div id="helpModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-question-circle"></i> Help Center</h2>
+                <button class="modal-close-btn" onclick="closeModal('helpModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Welcome to Money Mate Help Center! Here are answers to common questions:</p>
+                <ul>
+                    <li>How do I add expenses? Simply click "Add Expense" and fill in the details</li>
+                    <li>Can I categorize my expenses? Yes, we support 10+ pre-defined categories</li>
+                    <li>How do I track savings? Use our Savings Goals section to set and monitor targets</li>
+                    <li>Is my data secure? We use industry-standard encryption for all transactions</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('helpModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Modal -->
+    <div id="blogModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-book"></i> Blog</h2>
+                <button class="modal-close-btn" onclick="closeModal('blogModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Latest articles and insights on personal finance:</p>
+                <ul>
+                    <li>Top 10 Money-Saving Tips for 2025</li>
+                    <li>Building Your Emergency Fund</li>
+                    <li>Smart Budgeting Strategies</li>
+                    <li>Investment Basics for Beginners</li>
+                    <li>How to Achieve Financial Freedom</li>
+                </ul>
+                <p style="margin-top: 1rem;">Stay tuned for more content!</p>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('blogModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Tips Modal -->
+    <div id="tipsModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-lightbulb"></i> Financial Tips</h2>
+                <button class="modal-close-btn" onclick="closeModal('tipsModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Expert advice for better financial management:</p>
+                <ul>
+                    <li>Follow the 50/30/20 budgeting rule</li>
+                    <li>Track every expense to identify spending patterns</li>
+                    <li>Set realistic and measurable financial goals</li>
+                    <li>Review your budget monthly and adjust as needed</li>
+                    <li>Build multiple income streams</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('tipsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Community Modal -->
+    <div id="communityModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-users"></i> Community</h2>
+                <button class="modal-close-btn" onclick="closeModal('communityModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Join our growing community of finance enthusiasts!</p>
+                <ul>
+                    <li>Share your financial goals with thousands of users</li>
+                    <li>Learn from other members' experiences</li>
+                    <li>Get tips and advice from financial experts</li>
+                    <li>Participate in challenges and competitions</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('communityModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-info-circle"></i> About Us</h2>
+                <button class="modal-close-btn" onclick="closeModal('aboutModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Money Mate is a comprehensive personal finance management platform designed to help you take control
+                    of your financial life. We believe everyone deserves access to powerful financial tools without
+                    complexity.</p>
+                <ul>
+                    <li>Founded in 2024 with a mission to simplify finance</li>
+                    <li>Used by thousands of users worldwide</li>
+                    <li>Constantly improving with user feedback</li>
+                    <li>Built with security and privacy as core values</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('aboutModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-envelope"></i> Contact Us</h2>
+                <button class="modal-close-btn" onclick="closeModal('contactModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>We'd love to hear from you! Get in touch with us:</p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="display: flex; gap: 1rem; margin-bottom: 1rem;"><i class="fas fa-envelope"
+                            style="color: #00d9b8;"></i> Email: charansuvarna99@gmail.com</li>
+                    <li style="display: flex; gap: 1rem; margin-bottom: 1rem;"><i class="fas fa-phone"
+                            style="color: #00d9b8;"></i> Phone: +91 9380455922</li>
+                    <li style="display: flex; gap: 1rem;"><i class="fas fa-map-marker-alt" style="color: #00d9b8;"></i>
+                        Udupi, Karnataka, India</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('contactModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div id="privacyModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-lock"></i> Privacy Policy</h2>
+                <button class="modal-close-btn" onclick="closeModal('privacyModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>Your privacy is important to us. We are committed to protecting your personal information:</p>
+                <ul>
+                    <li>We do not share your data with third parties</li>
+                    <li>All transactions are encrypted with SSL/TLS</li>
+                    <li>You have full control over your account data</li>
+                    <li>We comply with international privacy standards</li>
+                    <li>You can request data deletion anytime</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('privacyModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-file-contract"></i> Terms of Service</h2>
+                <button class="modal-close-btn" onclick="closeModal('termsModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>By using Money Mate, you agree to our terms and conditions:</p>
+                <ul>
+                    <li>Service is provided as-is without warranties</li>
+                    <li>Users are responsible for account security</li>
+                    <li>No unlawful or harmful activities allowed</li>
+                    <li>We reserve the right to modify the service</li>
+                    <li>Terms are subject to change with notice</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('termsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Policy Modal -->
+    <div id="cookieModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-cookie-bite"></i> Cookie Policy</h2>
+                <button class="modal-close-btn" onclick="closeModal('cookieModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <p>We use cookies to enhance your experience:</p>
+                <ul>
+                    <li>Essential cookies keep you logged in securely</li>
+                    <li>Analytics cookies help us improve the service</li>
+                    <li>Preference cookies remember your settings</li>
+                    <li>You can disable cookies in browser settings</li>
+                    <li>Some features may not work without cookies</li>
+                </ul>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('cookieModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='charts.js') }}"></script>
-    
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function (event) {
+            if (event.target.classList.contains('custom-modal')) {
+                event.target.classList.remove('show');
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.custom-modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
+        });
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
