@@ -1,55 +1,8 @@
-# 💰 Money Mate - Personal Finance Management API & Web Application
+# 💰 Money Mate - Personal Finance Management Web Application
 
-A comprehensive RESTful API and web application built with Flask, providing a powerful backend for personal finance management. Features both API endpoints and web interface for expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management.
+A comprehensive web application built with Flask, providing powerful personal finance management tools. Features include expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management with multi-currency support.
 
-## 🔗 API Documentation
-
-### Base URL
-```
-http://localhost:5000/api/v1
-```
-
-### Authentication
-```http
-Authorization: Bearer YOUR_API_TOKEN
-```
-
-### API Endpoints
-
-#### Expenses
-```http
-GET    /api/v1/expenses         # List all expenses
-POST   /api/v1/expenses         # Create new expense
-GET    /api/v1/expenses/{id}    # Get single expense
-PUT    /api/v1/expenses/{id}    # Update expense
-DELETE /api/v1/expenses/{id}    # Delete expense
-```
-
-#### Income
-```http
-GET    /api/v1/income          # List all income
-POST   /api/v1/income          # Add new income
-GET    /api/v1/income/{id}     # Get single income record
-PUT    /api/v1/income/{id}     # Update income
-DELETE /api/v1/income/{id}     # Delete income
-```
-
-#### Example API Response
-```json
-{
-    "status": "success",
-    "data": {
-        "id": 1,
-        "date": "2025-01-15",
-        "category": "Food & Dining",
-        "amount": 25.50,
-        "note": "Lunch at cafe",
-        "payment_method": "credit_card",
-        "created_at": "2025-01-15T12:00:00Z"
-    }
-}
-
-## 🚀 New Features Added
+## ✨ Key Features
 
 ### 1. Income Tracking 📈
 - Track income from multiple sources (Salary, Freelance, Business, etc.)
@@ -113,16 +66,6 @@ DELETE /api/v1/income/{id}     # Delete income
 ```bash
 git clone https://github.com/charan-kumar99/Money_Mate.git
 cd Money_Mate
-
-### Step 2: Create Virtual Environment
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
 ```
 
 ### Step 2: Create Virtual Environment
@@ -138,14 +81,8 @@ source venv/bin/activate
 
 ### Step 3: Install Dependencies
 ```bash
-# Core dependencies
-pip install flask flask-sqlalchemy flask-migrate flask-wtf
-
-# API related dependencies
-pip install flask-jwt-extended flask-cors flask-limiter flask-restful
-
-# Additional utilities
-pip install python-dotenv redis requests
+# Install all dependencies from requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Step 4: Initialize Database
@@ -170,23 +107,24 @@ The application will be available at `http://127.0.0.1:5000`
 ## 📁 Project Structure
 
 ```
-expense-tracker-pro/
+Money_Mate/
 ├── app.py                 # Main application file
 ├── models.py              # Database models
+├── requirements.txt       # Python dependencies
+├── sample_expenses.csv    # Sample data for import
 ├── templates/
 │   ├── base.html         # Base template
 │   ├── index.html        # Dashboard
 │   ├── analytics.html    # Analytics page
 │   ├── budgets.html      # Budget management
 │   ├── savings.html      # Savings goals
-│   ├── income.html       # Income tracking (NEW)
-│   ├── recurring.html    # Recurring expenses (NEW)
-│   └── edit.html         # Edit expense
+│   ├── income.html       # Income tracking
+│   └── recurring.html    # Recurring expenses
 ├── static/
-│   ├── style.css         # Custom styles
-│   └── charts.js         # Chart configurations (optional)
+│   └── style.css         # Custom styles
 ├── migrations/           # Database migrations
-└── expenses.db          # SQLite database (auto-created)
+└── instance/
+    └── expenses.db       # SQLite database (auto-created)
 ```
 
 ## 🎨 Features Overview
@@ -241,31 +179,14 @@ expense-tracker-pro/
 
 ## 🔧 Configuration
 
-### API Configuration
-```python
-# In app.py
-# JWT Configuration
-JWT_SECRET_KEY = 'your-jwt-secret-key-here'
-JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-
-# Rate Limiting
-RATELIMIT_DEFAULT = "100 per minute"
-RATELIMIT_STORAGE_URL = "redis://localhost:6379/0"
-
-# CORS Configuration
-CORS_ORIGINS = ['http://localhost:3000', 'https://yourdomain.com']
-```
-
 ### Change Secret Key (Important for Production!)
 In `app.py`, change:
 ```python
 app.config['SECRET_KEY'] = 'your_secret_key_here_change_in_production'
-JWT_SECRET_KEY = 'your-jwt-secret-key-here'
 ```
-To strong, random secret keys:
+To a strong, random secret key:
 ```python
 app.config['SECRET_KEY'] = 'your-actual-secret-key-here'
-JWT_SECRET_KEY = 'your-actual-jwt-secret-key-here'
 ```
 
 ### Database Configuration
@@ -290,6 +211,8 @@ Date,Category,Amount,Note,Payment Method
 
 **Required columns:** Date, Category, Amount  
 **Optional columns:** Note, Payment Method
+
+**Sample file:** Use `sample_expenses.csv` as a reference for the correct format.
 
 ## 🎯 Usage Tips
 
@@ -317,15 +240,19 @@ Date,Category,Amount,Note,Payment Method
 flask db downgrade
 flask db upgrade
 
-# Or delete database and recreate
-rm expenses.db
+# Or delete database and recreate (Windows)
+del instance\expenses.db
+flask db upgrade
+
+# Linux/Mac
+rm instance/expenses.db
 flask db upgrade
 ```
 
 ### Import Errors
 ```bash
 # Reinstall dependencies
-pip install --upgrade flask flask-sqlalchemy flask-migrate flask-wtf
+pip install -r requirements.txt --upgrade
 ```
 
 ### Port Already in Use
@@ -337,14 +264,6 @@ if __name__ == "__main__":
 
 ## 🔐 Security Notes
 
-### API Security
-- ✅ JWT Authentication for API endpoints
-- ✅ Rate limiting protection (100 requests per minute)
-- ✅ CORS policy configuration
-- ✅ API request validation
-- ✅ API response sanitization
-- ✅ Bearer token authentication
-
 ### Web Application Security
 - ✅ CSRF protection enabled on all forms
 - ✅ SQL injection prevention through SQLAlchemy ORM
@@ -353,12 +272,12 @@ if __name__ == "__main__":
 - ✅ XSS protection
 
 ### Production Considerations
-- ⚠️ Change SECRET_KEY and JWT_SECRET_KEY in production
-- ⚠️ Configure proper CORS origins
+- ⚠️ Change SECRET_KEY in production
 - ⚠️ Set debug=False in production
 - ⚠️ Use HTTPS/SSL in production
-- ⚠️ Set up proper API rate limiting
 - ⚠️ Implement proper error logging
+- ⚠️ Use a production-grade database (PostgreSQL/MySQL)
+- ⚠️ Set up proper backup strategies
 
 ## 📱 Browser Support
 
@@ -383,6 +302,14 @@ Edit `static/style.css`:
 
 ### Add New Categories
 Categories are dynamically created. Just type a new category name when adding an expense!
+
+### Payment Methods
+Available payment methods:
+- Cash
+- Credit Card
+- Debit Card
+- Bank Transfer
+- Digital Wallet
 
 ## 📈 Future Enhancements (Roadmap)
 
@@ -428,7 +355,7 @@ If you encounter any issues:
 ---
 
 **Version:** 2.0.0  
-**Last Updated:** 2025  
-**Status:** ✅ Production Ready - All bugs fixed and tested!
+**Last Updated:** January 2025  
+**Status:** ✅ Production Ready
 
 Happy expense tracking! 💰📊✨

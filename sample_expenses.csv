@@ -1,21 +1,41 @@
 Date,Category,Amount,Note,Payment Method
-2025-08-01,Groceries,1500,Weekly grocery shopping at supermarket,debit_card
-2025-08-02,Transport,300,Fuel for bike,cash
-2025-08-03,Entertainment,500,Movie tickets and snacks,credit_card
-2025-08-05,Utilities,1200,Electricity bill payment,bank_transfer
-2025-08-06,Dining Out,800,Dinner with friends at restaurant,digital_wallet
-2025-08-07,Groceries,1300,Weekly groceries for home,debit_card
-2025-08-08,Transport,250,Monthly bus pass,cash
-2025-08-09,Entertainment,600,Concert tickets for weekend,credit_card
-2025-08-10,Utilities,1100,Water bill for August,bank_transfer
-2025-08-11,Dining Out,700,Lunch with colleagues at cafe,digital_wallet
-2025-08-12,Groceries,1400,Supermarket shopping for pantry,debit_card
-2025-08-13,Transport,350,Fuel refill for car,cash
-2025-08-14,Entertainment,450,Streaming service subscription,digital_wallet
-2025-08-15,Utilities,1250,Internet bill payment,bank_transfer
-2025-08-16,Dining Out,900,Dinner outing with family,credit_card
-2025-08-17,Groceries,1600,Weekly grocery restock,debit_card
-2025-08-18,Transport,400,Fuel and parking fees,cash
-2025-08-19,Entertainment,550,Amusement park visit,credit_card
-2025-08-20,Utilities,1150,Electricity bill for second meter,bank_transfer
-2025-09-01,Shopping,2500,New clothes for festival,digital_wallet
+2025-01-01,Groceries,2500,Monthly grocery shopping at supermarket,debit_card
+2025-01-02,Transport,450,Fuel for car,cash
+2025-01-03,Entertainment,800,Movie tickets and dinner,credit_card
+2025-01-04,Utilities,1800,Electricity bill payment,bank_transfer
+2025-01-05,Dining Out,650,Lunch with colleagues,digital_wallet
+2025-01-06,Healthcare,1200,Doctor consultation and medicines,debit_card
+2025-01-07,Shopping,3500,New clothes and accessories,credit_card
+2025-01-08,Transport,300,Metro card recharge,digital_wallet
+2025-01-09,Entertainment,500,Streaming service subscription,credit_card
+2025-01-10,Groceries,1800,Weekly grocery shopping,debit_card
+2025-01-11,Dining Out,900,Dinner with family,cash
+2025-01-12,Utilities,1500,Internet and phone bill,bank_transfer
+2025-01-13,Education,5000,Online course subscription,credit_card
+2025-01-14,Transport,600,Fuel refill,cash
+2025-01-15,Entertainment,1200,Concert tickets,digital_wallet
+2025-01-16,Groceries,2200,Supermarket shopping,debit_card
+2025-01-17,Healthcare,800,Pharmacy medicines,cash
+2025-01-18,Shopping,2500,Electronics accessories,credit_card
+2025-01-19,Dining Out,750,Restaurant dinner,digital_wallet
+2025-01-20,Utilities,2000,Water and gas bill,bank_transfer
+2025-01-21,Transport,400,Taxi fare,digital_wallet
+2025-01-22,Entertainment,350,Gaming subscription,credit_card
+2025-01-23,Groceries,1600,Weekly groceries,debit_card
+2025-01-24,Fitness,2500,Gym membership,bank_transfer
+2025-01-25,Dining Out,550,Coffee and snacks,cash
+2025-01-26,Shopping,4500,Furniture for home,credit_card
+2025-01-27,Transport,500,Fuel and parking,cash
+2025-01-28,Entertainment,600,Amusement park visit,digital_wallet
+2025-01-29,Groceries,2000,Monthly restock,debit_card
+2025-01-30,Utilities,1200,Electricity bill,bank_transfer
+2025-02-01,Healthcare,3500,Dental treatment,credit_card
+2025-02-02,Transport,350,Bus pass,cash
+2025-02-03,Dining Out,850,Brunch with friends,digital_wallet
+2025-02-04,Shopping,1800,Books and stationery,debit_card
+2025-02-05,Entertainment,450,Movie streaming rental,credit_card
+2025-02-06,Groceries,2300,Grocery shopping,debit_card
+2025-02-07,Utilities,1600,Internet bill,bank_transfer
+2025-02-08,Transport,700,Fuel refill,cash
+2025-02-09,Fitness,500,Yoga class,digital_wallet
+2025-02-10,Dining Out,950,Restaurant dinner,credit_card
