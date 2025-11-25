@@ -14,7 +14,7 @@ import json
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key_here_change_in_production'
+app.config['SECRET_KEY'] = 'a3f9c2d5e6b7f8a9c0d1e2f3b4a5c6d7e8f9b0c1d2e3f4a5b6c7d8e9f0a1b2c3'
 app.config['WTF_CSRF_TIME_LIMIT'] = None
 db.init_app(app)
 migrate = Migrate(app, db)
