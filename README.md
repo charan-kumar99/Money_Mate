@@ -1,6 +1,17 @@
 # 💰 Money Mate - Personal Finance Management Web Application
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20App-brightgreen?style=for-the-badge&logo=render)](https://money-mate-e33v.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0-black?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-316192?style=for-the-badge&logo=postgresql)](https://neon.tech/)
+
 A comprehensive web application built with Flask, providing powerful personal finance management tools. Features include expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management with multi-currency support.
+
+## 🚀 Live Demo
+
+**Try it now:** [https://money-mate-e33v.onrender.com](https://money-mate-e33v.onrender.com)
+
+> 🎯 Create an account and start managing your finances today!
 
 ## ✨ Key Features
 
