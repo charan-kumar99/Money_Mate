@@ -2,17 +2,10 @@
 
 {% block title %}Dashboard - Expense Tracker Pro{% endblock %}
 
-{% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}Track and manage your expenses efficiently{% endblock %}
+{% block page_title %}<i class="fas fa-chart-line"></i> Expense Dashboard{% endblock %}
+{% block page_subtitle %}Monitor your spending and financial health{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1 class="main-heading">
-        <i class="fas fa-chart-line"></i>
-        Expense Dashboard
-    </h1>
-    <p class="sub-heading">Monitor your spending and financial health</p>
-</div>
 
 <!-- Stats Grid -->
 <div class="stat-grid">
@@ -126,23 +119,11 @@
                 
                 <hr class="my-4">
                 
-                <!-- CSV Upload -->
-                <form method="POST" action="{{ url_for('upload_csv') }}" enctype="multipart/form-data" class="mb-3">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div class="mb-3">
-                        <label for="file" class="form-label">Upload CSV</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".csv">
-                        <div class="form-text">CSV format: Date, Category, Amount, Note, Payment Method</div>
-                    </div>
-                    <button type="submit" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-upload me-2"></i>Upload CSV
-                    </button>
-                </form>
-                
+
                 <!-- Export Button -->
-                <a href="{{ url_for('export_csv', category_filter=category_filter, date_filter=date_filter, start_date=start_date, end_date=end_date, search_query=search_query, payment_filter=payment_filter) }}" 
+                <a href="{{ url_for('export_pdf') }}" 
                    class="btn btn-outline-success w-100 mb-3">
-                    <i class="fas fa-download me-2"></i>Export CSV
+                    <i class="fas fa-file-pdf me-2"></i>Export PDF
                 </a>
                 
                 <!-- Clear All Button -->

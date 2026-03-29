@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Money Mate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0e1a 0%, #141824 50%, #1e2330 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 217, 184, 0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(77, 171, 247, 0.1) 0%, transparent 70%);
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, 50px); }
+        }
+        .signup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .signup-card {
+            background: rgba(20, 24, 36, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 217, 184, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .signup-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00d9b8, #4dabf7);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 3.2rem;
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .logo h2 {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            margin: 0;
+            font-size: 2.1rem;
+            letter-spacing: -1px;
+        }
+        .logo p {
+            color: #8891a8;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group-text {
+            background: rgba(0, 217, 184, 0.1);
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            border-right: none;
+            border-radius: 15px 0 0 15px;
+            padding: 12px 16px;
+        }
+        .input-group-text i {
+            color: #00d9b8;
+            font-size: 1.2rem;
+        }
+        .form-control {
+            background: rgba(30, 35, 48, 0.8);
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            border-left: none;
+            color: #fff;
+            border-radius: 0 15px 15px 0;
+            padding: 12px 18px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control::placeholder {
+            color: #8891a8;
+        }
+        .form-control:focus {
+            background: rgba(30, 35, 48, 1);
+            border-color: #00d9b8;
+            box-shadow: 0 0 0 5px rgba(0, 217, 184, 0.1);
+            color: #fff;
+            outline: none;
+        }
+        .password-strength {
+            height: 6px;
+            border-radius: 10px;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+            background: rgba(30, 35, 48, 0.5);
+        }
+        .strength-weak { 
+            background: linear-gradient(90deg, #ff6b9d, #ff8fab);
+            box-shadow: 0 2px 10px rgba(255, 107, 157, 0.3);
+        }
+        .strength-medium { 
+            background: linear-gradient(90deg, #ffd93d, #ffb347);
+            box-shadow: 0 2px 10px rgba(255, 217, 61, 0.3);
+        }
+        .strength-strong { 
+            background: linear-gradient(90deg, #00d9b8, #00ffc6);
+            box-shadow: 0 2px 10px rgba(0, 217, 184, 0.3);
+        }
+        .btn-signup {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 14px;
+            font-weight: 700;
+            width: 100%;
+            color: #fff;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 5px 25px rgba(0, 217, 184, 0.3);
+        }
+        .btn-signup:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(0, 217, 184, 0.5);
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 30px;
+            color: #8891a8;
+            font-size: 1.05rem;
+        }
+        .login-link a {
+            color: #00d9b8;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .login-link a:hover {
+            color: #4dabf7;
+        }
+        .alert {
+            border-radius: 15px;
+            border: none;
+            margin-bottom: 25px;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+        .alert-danger {
+            background: rgba(255, 107, 157, 0.15);
+            color: #ff6b9d;
+            border-left: 4px solid #ff6b9d;
+        }
+        .alert-success {
+            background: rgba(0, 217, 184, 0.15);
+            color: #00d9b8;
+            border-left: 4px solid #00d9b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-card">
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+                <h2>Money Mate</h2>
+                <p>Create your account to get started</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" id="signupForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-user text-white-50"></i>
+                        </span>
+                        <input type="text" name="username" class="form-control border-start-0" placeholder="Username" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-envelope text-white-50"></i>
+                        </span>
+                        <input type="email" name="email" class="form-control border-start-0" placeholder="Email" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-lock text-white-50"></i>
+                        </span>
+                        <input type="password" name="password" id="password" class="form-control border-start-0" placeholder="Password" required>
+                    </div>
+                    <div class="password-strength" id="passwordStrength"></div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-lock text-white-50"></i>
+                        </span>
+                        <input type="password" name="confirm_password" class="form-control border-start-0" placeholder="Confirm Password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-signup" id="signupBtn">
+                    <i class="fas fa-user-plus me-2" id="signupIcon"></i><span id="signupText">Sign Up</span>
+                </button>
+            </form>
+            
+            <div class="login-link">
+                Already have an account? <a href="{{ url_for('login') }}">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+            
+            strengthBar.className = 'password-strength';
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+            } else if (strength <= 3) {
+                strengthBar.classList.add('strength-medium');
+            } else {
+                strengthBar.classList.add('strength-strong');
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            const password = document.querySelector('input[name="password"]').value;
+            const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            } else {
+                const btn = document.getElementById('signupBtn');
+                const icon = document.getElementById('signupIcon');
+                const text = document.getElementById('signupText');
+                
+                btn.disabled = true;
+                icon.className = 'spinner-border spinner-border-sm me-2';
+                text.textContent = 'Creating account...';
+            }
+        });
+    </script>
+</body>
+</html>

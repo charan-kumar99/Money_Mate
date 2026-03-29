@@ -111,7 +111,6 @@ Money_Mate/
 ├── app.py                 # Main application file
 ├── models.py              # Database models
 ├── requirements.txt       # Python dependencies
-├── sample_expenses.csv    # Sample data for import
 ├── templates/
 │   ├── base.html         # Base template
 │   ├── index.html        # Dashboard
@@ -136,7 +135,7 @@ Money_Mate/
 - Sortable expense list
 - Top categories chart
 - Monthly spending trend
-- CSV import/export functionality
+- CSV export functionality
 
 ### Analytics
 - Total income and expenses overview
@@ -198,21 +197,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://username:password@localhos
 # MySQL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/dbname'
 ```
-
-## 📊 CSV Import Format
-
-The CSV file should have the following columns:
-```csv
-Date,Category,Amount,Note,Payment Method
-2025-01-15,Food & Dining,25.50,Lunch at cafe,credit_card
-2025-01-16,Transportation,15.00,Taxi fare,cash
-2025-01-17,Shopping,120.00,New shoes,debit_card
-```
-
-**Required columns:** Date, Category, Amount  
-**Optional columns:** Note, Payment Method
-
-**Sample file:** Use `sample_expenses.csv` as a reference for the correct format.
 
 ## 🎯 Usage Tips
 

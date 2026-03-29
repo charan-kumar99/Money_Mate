@@ -12,6 +12,7 @@ Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.23
 alembic==1.13.0
 greenlet==3.0.1
+psycopg2-binary==2.9.11
 
 # Database Migrations
 Flask-Migrate==4.0.5
@@ -27,3 +28,15 @@ typing_extensions==4.9.0
 
 # Production Server
 gunicorn==21.2.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Google Gemini AI
+google-genai==1.68.0
+
+# PDF Generation
+reportlab==4.0.7
+
+# Email Support
+Flask-Mail==0.9.1

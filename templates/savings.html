@@ -6,12 +6,6 @@
 {% block page_subtitle %}Track your progress towards financial goals{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1 class="main-heading">
-        <i class="fas fa-piggy-bank"></i> Savings Goals
-    </h1>
-    <p class="sub-heading">Track your progress towards financial goals</p>
-</div>
 
 <div class="row">
     <div class="col-lg-8">
@@ -175,21 +169,58 @@
         </div>
         {% endif %}
 
-        <!-- Savings Tips -->
+        <!-- AI Savings Tips -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-lightbulb"></i> Savings Tips
+                <span><i class="fas fa-lightbulb"></i> Savings Tips <span class="badge bg-info ms-1">AI</span></span>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="aiTipsContainer">
                 <ul class="list-unstyled small">
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Set specific, achievable goals</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Automate your savings</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Track progress regularly</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Celebrate small milestones</li>
-                    <li><i class="fas fa-check text-success"></i> Adjust goals as needed</li>
+                    <li class="mb-2"><i class="fas fa-circle-notch fa-spin text-warning"></i> Loading tips...</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .tip-shimmer {
+        height: 18px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(0,217,184,0.08) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('aiTipsContainer');
+        
+        // Get tips from session (passed from backend)
+        const sessionTips = {{ session.get('ai_tips', {}).get('savings', []) | tojson | safe }};
+        
+        if (sessionTips && sessionTips.length > 0) {
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                sessionTips.map(tip => `<li class="mb-2"><i class="fas fa-sparkles text-warning"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        } else {
+            // Fallback tips
+            const fallbackTips = [
+                'Set specific and measurable savings goals',
+                'Automate your savings with recurring transfers',
+                'Start with small amounts and increase gradually',
+                'Track your progress regularly to stay motivated'
+            ];
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                fallbackTips.map(tip => `<li class="mb-2"><i class="fas fa-check text-success"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        }
+    });
+</script>
 {% endblock %}

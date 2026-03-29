@@ -2,12 +2,10 @@
 
 {% block title %}Analytics - Money Mate{% endblock %}
 
+{% block page_title %}<i class="bi bi-graph-up me-2"></i>Financial Analytics{% endblock %}
+{% block page_subtitle %}Deep insights into your spending patterns and financial health{% endblock %}
+
 {% block content %}
-<!-- Analytics Header -->
-<div class="dashboard-header">
-    <h1 class="main-heading"><i class="bi bi-graph-up me-3"></i>Financial Analytics</h1>
-    <p class="sub-heading">Deep insights into your spending patterns and financial health</p>
-</div>
 
 <!-- Summary Cards -->
 <div class="stat-grid">
@@ -138,7 +136,7 @@
 <script>
     // Category Chart
     const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    const categoryData = {{ category_chart_data | tojson }};
+    const categoryData = {{ category_chart_data | tojson | safe }};
     new Chart(categoryCtx, {
         type: 'doughnut',
         data: {
@@ -169,7 +167,7 @@
 
     // Monthly Trend Chart
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    const monthlyData = {{ month_chart_data | tojson }};
+    const monthlyData = {{ month_chart_data | tojson | safe }};
     new Chart(monthlyCtx, {
         type: 'bar',
         data: {
@@ -181,7 +179,7 @@
                 borderColor: '#6366f1',
                 borderWidth: 2,
                 borderRadius: 8,
-                borderSkipped: false,
+                borderSkipped: false
             }]
         },
         options: {
@@ -218,7 +216,7 @@
 
     // Payment Methods Chart
     const paymentCtx = document.getElementById('paymentChart').getContext('2d');
-    const paymentData = {{ payment_chart_data | tojson }};
+    const paymentData = {{ payment_chart_data | tojson | safe }};
     new Chart(paymentCtx, {
         type: 'pie',
         data: {

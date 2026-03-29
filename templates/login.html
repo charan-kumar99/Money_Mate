@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Money Mate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0a0e1a 0%, #141824 50%, #1e2330 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 217, 184, 0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(77, 171, 247, 0.1) 0%, transparent 70%);
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, 50px); }
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .login-card {
+            background: rgba(20, 24, 36, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 217, 184, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00d9b8, #4dabf7);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 3.2rem;
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .logo h2 {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            margin: 0;
+            font-size: 2.1rem;
+            letter-spacing: -1px;
+        }
+        .logo p {
+            color: #8891a8;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group-text {
+            background: rgba(0, 217, 184, 0.1);
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            border-right: none;
+            border-radius: 15px 0 0 15px;
+            padding: 12px 16px;
+        }
+        .input-group-text i {
+            color: #00d9b8;
+            font-size: 1.2rem;
+        }
+        .form-control {
+            background: rgba(30, 35, 48, 0.8);
+            border: 2px solid rgba(0, 217, 184, 0.2);
+            border-left: none;
+            color: #fff;
+            border-radius: 0 15px 15px 0;
+            padding: 12px 18px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control::placeholder {
+            color: #8891a8;
+        }
+        .form-control:focus {
+            background: rgba(30, 35, 48, 1);
+            border-color: #00d9b8;
+            box-shadow: 0 0 0 5px rgba(0, 217, 184, 0.1);
+            color: #fff;
+            outline: none;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 14px;
+            font-weight: 700;
+            width: 100%;
+            color: #fff;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 5px 25px rgba(0, 217, 184, 0.3);
+        }
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(0, 217, 184, 0.5);
+        }
+        .signup-link {
+            text-align: center;
+            margin-top: 30px;
+            color: #8891a8;
+            font-size: 1.05rem;
+        }
+        .signup-link a {
+            color: #00d9b8;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .signup-link a:hover {
+            color: #4dabf7;
+        }
+        .alert {
+            border-radius: 15px;
+            border: none;
+            margin-bottom: 25px;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+        .alert-danger {
+            background: rgba(255, 107, 157, 0.15);
+            color: #ff6b9d;
+            border-left: 4px solid #ff6b9d;
+        }
+        .alert-success {
+            background: rgba(0, 217, 184, 0.15);
+            color: #00d9b8;
+            border-left: 4px solid #00d9b8;
+        }
+
+        /* Skeleton Overlay Styles */
+        .skeleton-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #141824; /* Matches app background */
+            z-index: 9999;
+            display: none;
+            flex-direction: row;
+        }
+
+        .skeleton-sidebar {
+            width: 260px;
+            background: rgba(20, 24, 36, 0.95); /* Matches sidebar bg */
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .skeleton-main {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            overflow: hidden;
+        }
+
+        .skeleton-topbar {
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .skeleton-box {
+            background-color: #1e2330;
+            background-image: linear-gradient(90deg, #1e2330 0px, #2a3042 150px, #1e2330 300px);
+            background-size: 1000px 100%;
+            animation: shine 2s infinite linear;
+            border-radius: 12px;
+        }
+
+        @keyframes shine {
+            0% { background-position: -500px 0; }
+            100% { background-position: 500px 0; }
+        }
+
+        /* Elements */
+        .sk-brand { width: 140px; height: 35px; border-radius: 8px; margin-bottom: 20px; }
+        .sk-nav-item { width: 100%; height: 45px; border-radius: 10px; }
+        .sk-title { width: 200px; height: 35px; }
+        .sk-subtitle { width: 300px; height: 16px; margin-top: 10px; }
+        
+        .sk-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .sk-card { height: 120px; border-radius: 20px; }
+        
+        .sk-content-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            flex: 1;
+        }
+        .sk-add { height: 400px; border-radius: 20px; }
+        .sk-list { height: 400px; border-radius: 20px; }
+        
+        @media (max-width: 991px) {
+            .skeleton-sidebar { display: none; }
+            .sk-cards { grid-template-columns: repeat(2, 1fr); }
+            .sk-content-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 576px) {
+            .sk-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+                <h2>Money Mate</h2>
+                <p>Welcome back! Sign in to continue</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-user text-white-50"></i>
+                        </span>
+                        <input type="text" name="username" class="form-control border-start-0" placeholder="Username" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-lock text-white-50"></i>
+                        </span>
+                        <input type="password" name="password" class="form-control border-start-0" placeholder="Password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt me-2" id="loginIcon"></i><span id="loginText">Login</span>
+                </button>
+            </form>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('forgot_password') }}" style="color: #8891a8; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;">
+                    <i class="fas fa-key me-1"></i>Forgot Password?
+                </a>
+            </div>
+            
+            <div class="signup-link">
+                Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="skeleton-overlay" id="skeletonOverlay">
+        <div class="skeleton-sidebar">
+            <div class="skeleton-box sk-brand"></div>
+            <div class="skeleton-box sk-nav-item" style="margin-top: 20px;"></div>
+            <div class="skeleton-box sk-nav-item"></div>
+            <div class="skeleton-box sk-nav-item"></div>
+            <div class="skeleton-box sk-nav-item"></div>
+            <div class="skeleton-box sk-nav-item"></div>
+            <div class="skeleton-box sk-nav-item"></div>
+        </div>
+        <div class="skeleton-main">
+            <div class="skeleton-topbar">
+                <div>
+                    <div class="skeleton-box sk-title"></div>
+                    <div class="skeleton-box sk-subtitle"></div>
+                </div>
+                <div class="skeleton-box" style="width: 100px; height: 40px; border-radius: 20px;"></div>
+            </div>
+            
+            <div class="sk-cards">
+                <div class="skeleton-box sk-card"></div>
+                <div class="skeleton-box sk-card"></div>
+                <div class="skeleton-box sk-card"></div>
+                <div class="skeleton-box sk-card"></div>
+            </div>
+            
+            <div class="sk-content-row">
+                <div class="skeleton-box sk-add"></div>
+                <div class="skeleton-box sk-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelector('form').addEventListener('submit', function() {
+            // Show the skeleton overlay
+            document.getElementById('skeletonOverlay').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>

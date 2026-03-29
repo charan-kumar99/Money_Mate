@@ -128,21 +128,58 @@
             </div>
         </div>
 
-        <!-- Budget Tips -->
+        <!-- AI Budget Tips -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-lightbulb"></i> Budgeting Tips
+                <span><i class="fas fa-lightbulb"></i> Budgeting Tips <span class="badge bg-info ms-1">AI</span></span>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="aiTipsContainer">
                 <ul class="list-unstyled small">
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Set realistic budgets based on past spending</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Review and adjust budgets monthly</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Track variable expenses separately</li>
-                    <li class="mb-2"><i class="fas fa-check text-success"></i> Include savings as a budget category</li>
-                    <li><i class="fas fa-check text-success"></i> Use the 50/30/20 rule as a guideline</li>
+                    <li class="mb-2"><i class="fas fa-circle-notch fa-spin text-warning"></i> Loading tips...</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .tip-shimmer {
+        height: 18px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(0,217,184,0.08) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('aiTipsContainer');
+        
+        // Get tips from session (passed from backend)
+        const sessionTips = {{ session.get('ai_tips', {}).get('budgets', []) | tojson | safe }};
+        
+        if (sessionTips && sessionTips.length > 0) {
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                sessionTips.map(tip => `<li class="mb-2"><i class="fas fa-sparkles text-warning"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        } else {
+            // Fallback tips
+            const fallbackTips = [
+                'Set realistic budgets based on past spending',
+                'Review and adjust budgets monthly',
+                'Track variable expenses separately',
+                'Include savings as a budget category'
+            ];
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                fallbackTips.map(tip => `<li class="mb-2"><i class="fas fa-check text-success"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        }
+    });
+</script>
 {% endblock %}

@@ -6,12 +6,6 @@
 {% block page_subtitle %}Manage your subscription and recurring payments{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1 class="main-heading">
-        <i class="fas fa-repeat"></i> Recurring Expenses
-    </h1>
-    <p class="sub-heading">Track subscriptions and regular payments</p>
-</div>
 
 <div class="row">
     <div class="col-lg-4">
@@ -71,29 +65,14 @@
             </div>
         </div>
 
-        <!-- Info Card -->
+        <!-- AI Recurring Tips -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-info-circle"></i> Tips
+                <span><i class="fas fa-info-circle"></i> Tips <span class="badge bg-info ms-1">AI</span></span>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="aiTipsContainer">
                 <ul class="list-unstyled small">
-                    <li class="mb-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        Track all subscriptions in one place
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        Never forget a payment again
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        Easily spot unused subscriptions
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle text-success"></i>
-                        Calculate monthly recurring costs
-                    </li>
+                    <li class="mb-2"><i class="fas fa-circle-notch fa-spin text-warning"></i> Loading tips...</li>
                 </ul>
             </div>
         </div>
@@ -173,8 +152,45 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    .tip-shimmer {
+        height: 18px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(0,217,184,0.08) 50%, rgba(255,255,255,0.03) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+    }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
 <script>
     // Set min date for next due to today
     document.getElementById('next_due').setAttribute('min', new Date().toISOString().split('T')[0]);
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('aiTipsContainer');
+        
+        // Get tips from session (passed from backend)
+        const sessionTips = {{ session.get('ai_tips', {}).get('recurring', []) | tojson | safe }};
+        
+        if (sessionTips && sessionTips.length > 0) {
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                sessionTips.map(tip => `<li class="mb-2"><i class="fas fa-sparkles text-warning"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        } else {
+            // Fallback tips
+            const fallbackTips = [
+                'Review recurring expenses quarterly',
+                'Look for subscription services you no longer use',
+                'Negotiate better rates on regular bills',
+                'Set reminders before renewal dates'
+            ];
+            container.innerHTML = '<ul class="list-unstyled small">' +
+                fallbackTips.map(tip => `<li class="mb-2"><i class="fas fa-check text-success"></i> ${tip}</li>`).join('') +
+                '</ul>';
+        }
+    });
 </script>
 {% endblock %}

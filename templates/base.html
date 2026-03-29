@@ -12,9 +12,30 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body>
+    {% if session.get('login_success') %}
+    {% set _ = session.pop('login_success', None) %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Welcome back{{ ", " ~ session.username|title if session.username else "" }}!',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                background: '#141824',
+                color: '#ffffff',
+                iconColor: '#00d9b8'
+            });
+        });
+    </script>
+    {% endif %}
     <div class="app-container">
         <!-- Sidebar -->
         <nav class="sidebar">
@@ -68,6 +89,7 @@
                         <span>Recurring</span>
                     </a>
                 </li>
+
             </ul>
 
             <div class="sidebar-footer">
@@ -80,12 +102,17 @@
                 <div class="currency-selector-wrapper">
                     <div class="currency-selector-title">Currency</div>
                     <div class="btn-group">
-                        {% for curr in ['₹', '$', '€', '£', '¥'] %}
-                        <a href="{{ url_for('set_currency_route', currency=curr) }}"
-                            class="currency-btn {% if currency == curr %}active{% endif %}">
-                            {{ curr }}
+                        {% set popular_currencies = [('₹', 'Indian Rupee'), ('$', 'US Dollar'), ('€', 'Euro'), ('£', 'British Pound'), ('¥', 'Japanese Yen')] %}
+                        {% for symbol, name in popular_currencies %}
+                        <a href="{{ url_for('set_currency_route', currency=symbol) }}"
+                            class="currency-btn {% if currency == symbol or currency_name == symbol %}active{% endif %}"
+                            title="{{ name }}">
+                            {{ symbol }}
                         </a>
                         {% endfor %}
+                        <a href="#" class="currency-btn d-flex align-items-center justify-content-center" onclick="openCurrencyModal(event)" title="Other Currencies">
+                            <i class="fas fa-plus"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -100,11 +127,18 @@
                     <p>{% block page_subtitle %}Track and manage your expenses efficiently{% endblock %}</p>
                 </div>
 
-                {% if conversion_info %}
-                <div class="conversion-info">
-                    💰 <strong>{{ conversion_info }}</strong>
+                <div class="top-bar-right">
+                    {% if conversion_info %}
+                    <div class="conversion-info">
+                        💰 <strong>{{ conversion_info }}</strong>
+                    </div>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('logout') }}" class="top-logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
-                {% endif %}
             </div>
 
             <!-- Content Area -->
@@ -165,10 +199,6 @@
                             <p class="footer-description">
                                 Your personal finance companion. Track expenses, set budgets, achieve your savings
                                 goals, and take control of your financial future.
-                            </p>
-                            <p class="footer-contact">
-                                Email: <a href="mailto:charansuvarna99@gmail.com">charansuvarna99@gmail.com</a><br>
-                                Phone: 9380455922
                             </p>
                             <div class="footer-social">
                                 <a href="https://github.com/charan-kumar99" class="social-link" title="GitHub">
@@ -275,8 +305,7 @@
                     <!-- Footer Bottom -->
                     <div class="footer-bottom">
                         <div class="footer-copyright">
-                            © 2025 <strong>Money Mate</strong>. All rights reserved.<br>
-                            Developed with ❤️ by Charan Kumar
+                            © 2025 <strong>Money Mate</strong>. All rights reserved.
                         </div>
                         <div class="footer-legal">
                             <a href="#" onclick="openModal('privacyModal'); return false;">Privacy Policy</a>
@@ -284,10 +313,21 @@
                             <a href="#" onclick="openModal('cookieModal'); return false;">Cookie Policy</a>
                         </div>
                     </div>
+                    <!-- Developer Credit -->
+                    <div class="footer-credit mt-4 pt-3 border-top text-center" style="color: var(--text-secondary); border-color: rgba(255, 255, 255, 0.05) !important;">
+                        Developed with ❤️ by Charan Kumar
+                    </div>
                 </div>
             </footer>
         </div>
     </div>
+
+
+    <!-- Floating Chat Button -->
+    <button class="floating-chat-btn" onclick="toggleChatWidget()" id="floatingChatBtn">
+        <i class="fas fa-robot"></i>
+        <span class="chat-badge">AI</span>
+    </button>
 
     <!-- Custom Modals -->
     <!-- Help Center Modal -->
@@ -415,10 +455,6 @@
             <div class="modal-body-custom">
                 <p>We'd love to hear from you! Get in touch with us:</p>
                 <ul style="list-style: none; padding: 0;">
-                    <li style="display: flex; gap: 1rem; margin-bottom: 1rem;"><i class="fas fa-envelope"
-                            style="color: #00d9b8;"></i> Email: charansuvarna99@gmail.com</li>
-                    <li style="display: flex; gap: 1rem; margin-bottom: 1rem;"><i class="fas fa-phone"
-                            style="color: #00d9b8;"></i> Phone: +91 9380455922</li>
                     <li style="display: flex; gap: 1rem;"><i class="fas fa-map-marker-alt" style="color: #00d9b8;"></i>
                         Udupi, Karnataka, India</li>
                 </ul>
@@ -498,12 +534,57 @@
         </div>
     </div>
 
+    <!-- Currency Converter Modal -->
+    <div id="currencyConverterModal" class="custom-modal">
+        <div class="modal-content-custom info-modal-content">
+            <div class="modal-header-custom">
+                <h2><i class="fas fa-exchange-alt"></i> Currency Converter</h2>
+                <button class="modal-close-btn" onclick="closeModal('currencyConverterModal')">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <form id="currencyConverterForm">
+                    <div class="mb-3">
+                        <label class="form-label" style="color: var(--text-secondary);">Amount</label>
+                        <input type="number" id="convAmount" class="form-control" value="1" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary);">From</label>
+                            <select id="convFrom" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="color: var(--text-secondary);">To</label>
+                            <select id="convTo" class="form-select" required></select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2" style="background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%); border: none;">Convert</button>
+                </form>
+                <div id="convResult" class="mt-4 text-center fw-bold fs-4" style="color: #00d9b8; display: none;"></div>
+                <div id="convError" class="mt-4 text-center text-danger" style="display: none;"></div>
+            </div>
+            <div class="modal-footer-custom">
+                <button class="modal-btn modal-btn-close" onclick="closeModal('currencyConverterModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='charts.js') }}"></script>
 
     <script>
+        // Auto-dismiss flash messages after 1 second
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 1000); // 1 second
+            });
+        });
+
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
@@ -517,6 +598,67 @@
                 modal.classList.remove('show');
             }
         }
+
+        // Currency Converter Logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load currencies
+            try {
+                const res = await fetch('https://api.frankfurter.dev/currencies');
+                const currencies = await res.json();
+                const fromSelect = document.getElementById('convFrom');
+                const toSelect = document.getElementById('convTo');
+                
+                if (fromSelect && toSelect) {
+                    for (const [code, name] of Object.entries(currencies)) {
+                        const option1 = new Option(`${code} - ${name}`, code);
+                        const option2 = new Option(`${code} - ${name}`, code);
+                        fromSelect.add(option1);
+                        toSelect.add(option2);
+                    }
+                    fromSelect.value = 'USD';
+                    toSelect.value = 'INR';
+                }
+            } catch (err) {
+                console.error("Failed to load currencies:", err);
+            }
+            
+            const convForm = document.getElementById('currencyConverterForm');
+            if (convForm) {
+                convForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const amount = document.getElementById('convAmount').value;
+                    const from = document.getElementById('convFrom').value;
+                    const to = document.getElementById('convTo').value;
+                    const resultDiv = document.getElementById('convResult');
+                    const errorDiv = document.getElementById('convError');
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    
+                    resultDiv.style.display = 'none';
+                    errorDiv.style.display = 'none';
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Converting...';
+                    
+                    try {
+                        const res = await fetch(`/convert?from=${from}&to=${to}&amount=${amount}`);
+                        const data = await res.json();
+                        
+                        if (res.ok) {
+                            resultDiv.textContent = `${amount} ${from} = ${data.converted.toFixed(2)} ${to}`;
+                            resultDiv.style.display = 'block';
+                        } else {
+                            errorDiv.textContent = data.error || "Conversion failed";
+                            errorDiv.style.display = 'block';
+                        }
+                    } catch (err) {
+                        errorDiv.textContent = "Network error";
+                        errorDiv.style.display = 'block';
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = 'Convert';
+                    }
+                });
+            }
+        });
 
         // Close modal when clicking outside of it
         window.addEventListener('click', function (event) {
@@ -535,7 +677,651 @@
         });
     </script>
 
+
+    <!-- Floating AI Chatbot Widget -->
+    <div id="aiChatWidget" class="ai-chat-widget">
+        <div class="chat-widget-header">
+            <div class="chat-widget-title">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </div>
+            <div class="chat-widget-actions">
+                <button class="chat-widget-new" onclick="newWidgetChat()" title="New Chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button class="chat-widget-close" onclick="toggleChatWidget()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-widget-messages" id="chatWidgetMessages">
+            <div class="widget-message bot-message">
+                <div class="widget-message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="widget-message-content">
+                    <p>👋 Hi! I'm your Money Mate AI Assistant. How can I help you today? 💰✨</p>
+                </div>
+            </div>
+            <div id="quickSuggestions" class="quick-suggestions">
+                <!-- Suggestions will be populated by JS -->
+            </div>
+        </div>
+        
+        <div class="chat-widget-input">
+            <form id="chatWidgetForm" onsubmit="sendWidgetMessage(event)">
+                <input 
+                    type="text" 
+                    id="widgetMessageInput" 
+                    placeholder="Ask me anything..."
+                    autocomplete="off"
+                >
+                <button type="submit" id="widgetSendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button class="floating-chat-btn" onclick="toggleChatWidget()" id="floatingChatBtn">
+        <i class="fas fa-robot"></i>
+        <span class="chat-badge">AI</span>
+    </button>
+
+    <style>
+        /* Floating Chat Button */
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 217, 184, 0.5);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #141824;
+            font-size: 2rem;
+        }
+
+        .floating-chat-btn:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 15px 40px rgba(0, 217, 184, 0.7);
+        }
+
+        .chat-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ff6b9d;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.6);
+            border: 2px solid var(--dark-1);
+        }
+
+        /* AI Chat Widget */
+        .ai-chat-widget {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 380px;
+            height: 600px;
+            background: rgba(20, 24, 36, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 217, 184, 0.4);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 217, 184, 0.15);
+            z-index: 998;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            transform-origin: bottom right;
+            animation: widgetPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+
+        .ai-chat-widget.active {
+            display: flex;
+        }
+
+        @keyframes widgetPopIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .chat-widget-header {
+            background: linear-gradient(135deg, rgba(0, 217, 184, 0.25) 0%, rgba(77, 171, 247, 0.25) 100%);
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 217, 184, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chat-widget-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0,217,184,0.3);
+        }
+
+        .chat-widget-title i {
+            color: #00d9b8;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-widget-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-widget-new {
+            background: rgba(0, 217, 184, 0.1);
+            border: 1px solid rgba(0, 217, 184, 0.3);
+            border-radius: 50%;
+            color: #00d9b8;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-widget-new:hover {
+            transform: scale(1.1);
+            background: rgba(0, 217, 184, 0.2);
+            box-shadow: 0 0 15px rgba(0, 217, 184, 0.5);
+        }
+
+        .chat-widget-close {
+            background: rgba(255, 107, 157, 0.1);
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            border-radius: 50%;
+            color: #ff6b9d;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-widget-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            background: #ff6b9d;
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 107, 157, 0.5);
+        }
+
+        .chat-widget-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 217, 184, 0.3) transparent;
+        }
+
+        .quick-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .suggestion-chip {
+            background: rgba(0, 217, 184, 0.1);
+            border: 1px solid rgba(0, 217, 184, 0.3);
+            border-radius: 12px;
+            padding: 0.7rem 1.1rem;
+            font-size: 0.95rem;
+            color: #00d9b8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(0, 217, 184, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 217, 184, 0.2);
+        }
+        
+        .chat-widget-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-widget-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 184, 0.3);
+            border-radius: 10px;
+        }
+
+        .widget-message {
+            display: flex;
+            gap: 1rem;
+            animation: messageSlideIn 0.3s ease forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        
+        @keyframes messageSlideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .widget-message.user-message {
+            flex-direction: row-reverse;
+        }
+
+        .widget-message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .bot-message .widget-message-avatar {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            color: white;
+            border: 2px solid rgba(0, 217, 184, 0.5);
+        }
+
+        .user-message .widget-message-avatar {
+            background: linear-gradient(135deg, #ff6b9d, #ff8fab);
+            color: white;
+            border: 2px solid rgba(255, 107, 157, 0.5);
+        }
+
+        .widget-message-content {
+            background: rgba(30, 35, 48, 0.8);
+            padding: 1.2rem 1.5rem;
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            max-width: 80%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .user-message .widget-message-content {
+            background: linear-gradient(135deg, rgba(0, 217, 184, 0.15) 0%, rgba(77, 171, 247, 0.15) 100%);
+            border: 1px solid rgba(0, 217, 184, 0.3);
+            border-top-right-radius: 4px;
+            border-top-left-radius: 18px;
+        }
+
+        .widget-message-content p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .chat-widget-input {
+            padding: 1.2rem;
+            border-top: 1px solid rgba(0, 217, 184, 0.2);
+            background: rgba(10, 14, 26, 0.9);
+        }
+
+        .chat-widget-input form {
+            display: flex;
+            gap: 0.8rem;
+            position: relative;
+        }
+
+        .chat-widget-input input {
+            flex: 1;
+            background: rgba(30, 35, 48, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 0.9rem 1.2rem;
+            padding-right: 3.5rem; /* Space for button inside */
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .chat-widget-input input:focus {
+            outline: none;
+            background: rgba(42, 47, 63, 0.9);
+            border-color: #00d9b8;
+            box-shadow: 0 0 0 4px rgba(0, 217, 184, 0.15);
+        }
+
+        .chat-widget-input button {
+            background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #141824;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 217, 184, 0.4);
+        }
+
+        .chat-widget-input button:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 217, 184, 0.6);
+            color: white;
+        }
+
+        .widget-typing-indicator {
+            display: flex;
+            gap: 0.4rem;
+            padding: 0.5rem;
+        }
+
+        .widget-typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d9b8;
+            animation: typing 1.4s ease-in-out infinite;
+        }
+
+        .widget-typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .widget-typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @media (max-width: 768px) {
+            .ai-chat-widget {
+                width: calc(100vw - 30px);
+                height: calc(100vh - 120px);
+                right: 15px;
+                bottom: 90px;
+            }
+        }
+    </style>
+
+    <script>
+        let widgetConversationHistory = [];
+        const suggestionPool = [
+            "💰 How can I save more money this month?",
+            "📊 What's my biggest expense category?",
+            "💡 How do I set a realistic budget?",
+            "🛡️ What are some tips for emergency funds?",
+            "📈 Explain the 50/30/20 rule.",
+            "✨ Tell me a financial tip of the day.",
+            "🔄 How can I track my subscriptions better?",
+            "⚠️ What should I do if I overspend?",
+            "🎯 How do I set financial goals?",
+            "💸 Tips to reduce monthly expenses?",
+            "🐷 Best ways to build savings?",
+            "📝 How to track expenses better?"
+        ];
+
+        function getRandomSuggestions() {
+            const shuffled = [...suggestionPool].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 4);
+        }
+
+        function populateSuggestions() {
+            const container = document.getElementById('quickSuggestions');
+            if (!container) return;
+            container.innerHTML = '';
+            const randoms = getRandomSuggestions();
+            randoms.forEach(text => {
+                const chip = document.createElement('div');
+                chip.className = 'suggestion-chip';
+                chip.textContent = text;
+                chip.onclick = () => {
+                    document.getElementById('widgetMessageInput').value = text;
+                    sendWidgetMessage(new Event('submit'));
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        function toggleChatWidget() {
+            const widget = document.getElementById('aiChatWidget');
+            const btn = document.getElementById('floatingChatBtn');
+            
+            if (widget.classList.contains('active')) {
+                widget.classList.remove('active');
+                btn.style.display = 'flex';
+            } else {
+                widget.classList.add('active');
+                btn.style.display = 'none';
+                populateSuggestions();
+            }
+        }
+
+        async function sendWidgetMessage(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('widgetMessageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addWidgetMessage(message, 'user');
+            input.value = '';
+            
+            // Disable send button
+            const sendBtn = document.getElementById('widgetSendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            // Show typing indicator
+            showWidgetTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/ai-support', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        history: widgetConversationHistory
+                    })
+                });
+                
+                const data = await response.json();
+                
+                removeWidgetTypingIndicator();
+                
+                if (data.success) {
+                    addWidgetMessage(data.response, 'bot');
+                    widgetConversationHistory.push({
+                        role: 'user',
+                        content: message
+                    });
+                    widgetConversationHistory.push({
+                        role: 'assistant',
+                        content: data.response
+                    });
+                } else {
+                    addWidgetMessage(data.error || 'Sorry, I encountered an error. Please try again.', 'bot');
+                }
+            } catch (error) {
+                removeWidgetTypingIndicator();
+                addWidgetMessage('Sorry, I could not connect. Please try again later.', 'bot');
+            }
+            
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        }
+
+        function addWidgetMessage(text, type) {
+            const messagesContainer = document.getElementById('chatWidgetMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `widget-message ${type}-message`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'widget-message-avatar';
+            avatar.innerHTML = type === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+            
+            const content = document.createElement('div');
+            content.className = 'widget-message-content';
+            content.innerHTML = formatWidgetMessage(text);
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            messagesContainer.appendChild(messageDiv);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function formatWidgetMessage(text) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            text = text.replace(/\n/g, '<br>');
+            return `<p>${text}</p>`;
+        }
+
+        function showWidgetTypingIndicator() {
+            const messagesContainer = document.getElementById('chatWidgetMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'widget-message bot-message';
+            typingDiv.id = 'widgetTypingIndicator';
+            
+            typingDiv.innerHTML = `
+                <div class="widget-message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="widget-message-content">
+                    <div class="widget-typing-indicator">
+                        <div class="widget-typing-dot"></div>
+                        <div class="widget-typing-dot"></div>
+                        <div class="widget-typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeWidgetTypingIndicator() {
+            const indicator = document.getElementById('widgetTypingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function newWidgetChat() {
+            const messagesContainer = document.getElementById('chatWidgetMessages');
+            messagesContainer.innerHTML = `
+                <div class="widget-message bot-message">
+                    <div class="widget-message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="widget-message-content">
+                        <p>👋 Hi! I'm your Money Mate AI Assistant. How can I help you today? 💰✨</p>
+                    </div>
+                </div>
+                <div id="quickSuggestions" class="quick-suggestions">
+                    <!-- Suggestions will be populated by JS -->
+                </div>
+            `;
+            widgetConversationHistory = [];
+            populateSuggestions();
+        }
+    </script>
+
     {% block scripts %}{% endblock %}
+    <div id="currencyModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="background: var(--dark-2); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title" style="color: var(--primary);">Select Currency</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center py-4" id="currencyLoader">
+                        <div class="spinner-border" style="color: var(--primary);" role="status"></div>
+                        <p class="mt-2 text-secondary">Loading currencies...</p>
+                    </div>
+                    <div class="row g-2" id="currencyList" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openCurrencyModal(e) {
+            e.preventDefault();
+            const modal = new bootstrap.Modal(document.getElementById('currencyModal'));
+            modal.show();
+            
+            fetch('/api/currencies')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('currencyLoader').style.display = 'none';
+                    const list = document.getElementById('currencyList');
+                    list.style.display = 'flex';
+                    list.innerHTML = '';
+                    const currName = '{{ currency_name }}';
+                    data.currencies.forEach(c => {
+                        const col = document.createElement('div');
+                        col.className = 'col-4';
+                        const isActive = c === currName || c === '{{ currency }}';
+                        const activeClass = isActive ? 'active' : '';
+                        const activeStyle = isActive ? 'background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%); color: white;' : 'background: var(--dark-3); color: var(--text-secondary);';
+                        col.innerHTML = `
+                            <a href="/set_currency/${c}" class="btn w-100 ${activeClass}" style="${activeStyle} border: 1px solid rgba(255,255,255,0.05); font-weight: 600; padding: 10px; transition: all 0.2s;">
+                                ${c}
+                            </a>
+                        `;
+                        list.appendChild(col);
+                    });
+                })
+                .catch(err => {
+                    document.getElementById('currencyLoader').innerHTML = '<p class="text-danger">Failed to load currencies.</p>';
+                });
+        }
+    </script>
 </body>
 
 </html>
