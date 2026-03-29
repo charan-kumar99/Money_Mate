@@ -42,7 +42,7 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a3f9c2d5e6b7f8a9c0d1e2f3b4a5c6d7e8f9b0c1d2e3f4a5b6c7d8e9f0a1b2c3')
 app.config['WTF_CSRF_TIME_LIMIT'] = None
-app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', 'AIzaSyCEYd5sbnadVNlt0YCn8CofWKmNfTWREzs')
+app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', '')
 
 # Email Configuration (Gmail)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'

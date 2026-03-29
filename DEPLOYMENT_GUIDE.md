@@ -160,7 +160,7 @@ Add these variables one by one:
    - Value: `a3f9c2d5e6b7f8a9c0d1e2f3b4a5c6d7e8f9b0c1d2e3f4a5b6c7d8e9f0a1b2c3`
 
 3. **GEMINI_API_KEY**
-   - Value: `AIzaSyCEYd5sbnadVNlt0YCn8CofWKmNfTWREzs`
+   - Value: `YOUR_NEW_GEMINI_API_KEY_HERE`
 
 4. **MAIL_USERNAME**
    - Value: `charanchanu99@gmail.com`
