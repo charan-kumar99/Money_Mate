@@ -1498,6 +1498,13 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
 def ai_support_api():
     """API endpoint for AI chatbot using Google Gemini"""
     try:
+        # Check if API key is configured
+        if not app.config.get('GEMINI_API_KEY') or app.config['GEMINI_API_KEY'] == '':
+            return jsonify({
+                'success': False,
+                'error': 'AI features are currently unavailable. Please contact the administrator to configure the Gemini API key.'
+            })
+        
         data = request.get_json()
         user_message = data.get('message', '')
         history = data.get('history', [])
@@ -1651,10 +1658,24 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
         
         # All models failed
         print(f"All models failed. Last error: {last_error}")
-        return jsonify({
-            'success': False,
-            'error': 'AI service is temporarily busy. Please wait a moment and try again.'
-        })
+        error_msg = str(last_error) if last_error else 'Unknown error'
+        
+        # Provide user-friendly error messages
+        if 'API key expired' in error_msg or 'API_KEY_INVALID' in error_msg:
+            return jsonify({
+                'success': False,
+                'error': 'AI features are temporarily unavailable due to API key issues. The core app features still work perfectly!'
+            })
+        elif '429' in error_msg or 'RESOURCE_EXHAUSTED' in error_msg or 'quota' in error_msg.lower():
+            return jsonify({
+                'success': False,
+                'error': 'AI service quota exceeded. Please try again later. All other features work normally!'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'AI service is temporarily unavailable. Please try again later.'
+            })
             
     except Exception as e:
         print(f"Error in AI support: {str(e)}")
@@ -1668,6 +1689,30 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
 
 def generate_tips_on_login():
     """Generate tips for all pages on login and store in session"""
+    # Check if API key is configured
+    if not app.config.get('GEMINI_API_KEY') or app.config['GEMINI_API_KEY'] == '':
+        print("Gemini API key not configured, using fallback tips")
+        return {
+            'budgets': [
+                'Set realistic budgets based on past spending',
+                'Review and adjust budgets monthly',
+                'Track variable expenses separately',
+                'Include savings as a budget category'
+            ],
+            'savings': [
+                'Set specific and measurable savings goals',
+                'Automate your savings with recurring transfers',
+                'Start with small amounts and increase gradually',
+                'Track your progress regularly to stay motivated'
+            ],
+            'recurring': [
+                'Review recurring expenses quarterly',
+                'Look for subscription services you no longer use',
+                'Negotiate better rates on regular bills',
+                'Set reminders before renewal dates'
+            ]
+        }
+    
     from google.genai import types
     import time
     
