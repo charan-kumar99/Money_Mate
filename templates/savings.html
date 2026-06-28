@@ -222,5 +222,26 @@
                 '</ul>';
         }
     });
+
+    // Confetti celebration for completed goals
+    document.addEventListener('DOMContentLoaded', function() {
+        const completedGoals = document.querySelectorAll('.badge.bg-success');
+        let hasCompleted = false;
+        completedGoals.forEach(badge => {
+            if (parseFloat(badge.textContent) >= 100) {
+                hasCompleted = true;
+            }
+        });
+        if (hasCompleted && typeof confetti === 'function') {
+            setTimeout(() => {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#00d9b8', '#4dabf7', '#ffd93d', '#ff6b9d', '#a78bfa']
+                });
+            }, 500);
+        }
+    });
 </script>
-{% endblock %}
+{% endblock %}

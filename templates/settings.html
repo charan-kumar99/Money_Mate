@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Settings - Money Mate{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Customize your Money Mate experience{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <form method="POST" action="{{ url_for('settings') }}" id="settingsForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- AI Configuration -->
+        <div class="card">
+            <div class="card-header">
+                <h5 style="font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="fas fa-robot"></i> AI Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="settings-section">
+                    <div class="settings-row">
+                        <div class="settings-item" style="grid-column: 1 / -1;">
+                            <label for="gemini_api_key"><i class="fas fa-key me-2"></i>Gemini API Key</label>
+                            <div class="api-key-input-wrapper">
+                                <input type="password"
+                                       class="form-control"
+                                       id="gemini_api_key"
+                                       name="gemini_api_key"
+                                       value="{{ user.gemini_api_key or '' }}"
+                                       placeholder="Enter your Google Gemini API key..."
+                                       autocomplete="off">
+                                <button type="button" class="api-key-toggle" onclick="toggleApiKeyVisibility()">
+                                    <i class="fas fa-eye" id="apiKeyToggleIcon"></i>
+                                </button>
+                            </div>
+                            <div style="margin-top: 0.75rem; display: flex; gap: 0.75rem; align-items: center;">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="testApiKey()" id="testApiBtn">
+                                    <i class="fas fa-bolt"></i> Test Connection
+                                </button>
+                                <small class="text-muted">Get your key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--primary);">Google AI Studio</a></small>
+                            </div>
+                            <div class="api-test-result" id="apiTestResult"></div>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-item">
+                            <label for="ai_personality"><i class="fas fa-user-tie me-2"></i>AI Advisor Personality</label>
+                            <select class="form-select" id="ai_personality" name="ai_personality">
+                                <option value="frugal" {% if user.ai_personality == 'frugal' %}selected{% endif %}>🏦 Frugal Coach — Conservative saving advice</option>
+                                <option value="balanced" {% if user.ai_personality == 'balanced' %}selected{% endif %}>⚖️ Balanced Advisor — Moderate & practical</option>
+                                <option value="ambitious" {% if user.ai_personality == 'ambitious' %}selected{% endif %}>🚀 Wealth Builder — Growth-oriented tips</option>
+                            </select>
+                        </div>
+                        <div class="settings-item">
+                            <label for="preferred_currency"><i class="fas fa-coins me-2"></i>Default Currency</label>
+                            <select class="form-select" id="preferred_currency" name="preferred_currency">
+                                <option value="₹" {% if user.preferred_currency == '₹' %}selected{% endif %}>₹ Indian Rupee (INR)</option>
+                                <option value="$" {% if user.preferred_currency == '$' %}selected{% endif %}>$ US Dollar (USD)</option>
+                                <option value="€" {% if user.preferred_currency == '€' %}selected{% endif %}>€ Euro (EUR)</option>
+                                <option value="£" {% if user.preferred_currency == '£' %}selected{% endif %}>£ British Pound (GBP)</option>
+                                <option value="¥" {% if user.preferred_currency == '¥' %}selected{% endif %}>¥ Japanese Yen (JPY)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Notifications -->
+        <div class="card">
+            <div class="card-header">
+                <h5 style="font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="fas fa-bell"></i> Email Notifications
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="settings-section">
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <h4>🚨 Budget Alerts</h4>
+                            <p>Get notified when a category budget reaches 80% or exceeds 100%</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_budget_alerts" {% if user.notify_budget_alerts %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <h4>📅 Due Date Reminders</h4>
+                            <p>Receive reminders for recurring expenses due within 3 days</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_due_reminders" {% if user.notify_due_reminders %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <h4>📊 Monthly Digest</h4>
+                            <p>Monthly summary email with spending trends and top categories</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_monthly_digest" {% if user.notify_monthly_digest %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-info">
+                            <h4>🏆 Savings Milestones</h4>
+                            <p>Celebrate when you hit savings goal milestones (25%, 50%, 75%, 100%)</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="notify_savings_milestones" {% if user.notify_savings_milestones %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Info -->
+        <div class="card">
+            <div class="card-header">
+                <h5 style="font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="fas fa-user-circle"></i> Account Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="settings-row">
+                    <div class="settings-item">
+                        <label>Username</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" disabled style="opacity: 0.6;">
+                    </div>
+                    <div class="settings-item">
+                        <label>Email</label>
+                        <input type="text" class="form-control" value="{{ user.email }}" disabled style="opacity: 0.6;">
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-item">
+                        <label>Member Since</label>
+                        <input type="text" class="form-control" value="{{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'N/A' }}" disabled style="opacity: 0.6;">
+                    </div>
+                    <div class="settings-item">
+                        <label>Achievements Unlocked</label>
+                        <input type="text" class="form-control" value="{{ achievements|length }} / {{ total_badges }}" disabled style="opacity: 0.6;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 style="font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem; margin: 0;">
+                    <i class="fas fa-trophy"></i> Achievements
+                </h5>
+                <span class="badge bg-primary">{{ achievements|length }} / {{ total_badges }}</span>
+            </div>
+            <div class="card-body">
+                <div class="achievements-grid">
+                    {% for key, badge in badge_catalog.items() %}
+                    <div class="achievement-card {% if key in unlocked_keys %}unlocked{% else %}locked{% endif %}">
+                        <span class="achievement-icon">{{ badge.icon }}</span>
+                        <div class="achievement-name">{{ badge.name }}</div>
+                        <div class="achievement-desc">{{ badge.description }}</div>
+                        {% if key in unlocked_keys %}
+                        <div class="achievement-date">
+                            <i class="fas fa-check-circle"></i> Unlocked
+                        </div>
+                        {% else %}
+                        <div class="achievement-date" style="color: var(--text-secondary);">
+                            <i class="fas fa-lock"></i> Locked
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; margin-bottom: 3rem;">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('gemini_api_key');
+    const icon = document.getElementById('apiKeyToggleIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function testApiKey() {
+    const key = document.getElementById('gemini_api_key').value;
+    const resultDiv = document.getElementById('apiTestResult');
+    const btn = document.getElementById('testApiBtn');
+
+    if (!key.trim()) {
+        resultDiv.className = 'api-test-result error';
+        resultDiv.textContent = '✗ Please enter an API key first';
+        resultDiv.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+    resultDiv.className = 'api-test-result';
+    resultDiv.style.display = 'none';
+
+    fetch('/api/test-gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: key })
+    })
+    .then(res => res.json())
+    .then(data => {
+        resultDiv.style.display = 'block';
+        if (data.success) {
+            resultDiv.className = 'api-test-result success';
+            resultDiv.textContent = '✓ API key is valid! AI features are ready.';
+        } else {
+            resultDiv.className = 'api-test-result error';
+            resultDiv.textContent = '✗ ' + (data.error || 'Invalid API key');
+        }
+    })
+    .catch(() => {
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'api-test-result error';
+        resultDiv.textContent = '✗ Connection error. Please try again.';
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-bolt"></i> Test Connection';
+    });
+}
+</script>
+{% endblock %}

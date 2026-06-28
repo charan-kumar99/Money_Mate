@@ -13,6 +13,17 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Settings fields
+    gemini_api_key = db.Column(db.String(255), default='')
+    preferred_currency = db.Column(db.String(10), default='₹')
+    ai_personality = db.Column(db.String(50), default='balanced')  # frugal, balanced, ambitious
+    
+    # Notification preferences
+    notify_budget_alerts = db.Column(db.Boolean, default=True)
+    notify_due_reminders = db.Column(db.Boolean, default=True)
+    notify_monthly_digest = db.Column(db.Boolean, default=False)
+    notify_savings_milestones = db.Column(db.Boolean, default=True)
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
@@ -98,3 +109,71 @@ class RecurringExpense(db.Model):
 
     def __repr__(self):
         return f'<RecurringExpense {self.name}: {self.amount} ({self.frequency})>'
+
+class Achievement(db.Model):
+    __tablename__ = 'achievement'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    badge_key = db.Column(db.String(50), nullable=False)  # unique key for the badge type
+    unlocked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'badge_key', name='uix_user_badge'),
+    )
+    
+    def __repr__(self):
+        return f'<Achievement {self.badge_key} for user {self.user_id}>'
+
+# Badge definitions — static catalog
+BADGE_CATALOG = {
+    'first_expense': {
+        'name': 'First Step',
+        'icon': '🏁',
+        'description': 'Logged your first expense',
+    },
+    'expense_streak_7': {
+        'name': 'Consistent Tracker',
+        'icon': '🔥',
+        'description': 'Logged expenses 7 days in a row',
+    },
+    'budget_master': {
+        'name': 'Budget Master',
+        'icon': '🎯',
+        'description': 'Stayed under budget for a full month',
+    },
+    'savings_starter': {
+        'name': 'Savings Starter',
+        'icon': '🌱',
+        'description': 'Created your first savings goal',
+    },
+    'goal_crusher': {
+        'name': 'Goal Crusher',
+        'icon': '🏆',
+        'description': 'Completed a savings goal',
+    },
+    'income_diversifier': {
+        'name': 'Income Diversifier',
+        'icon': '💎',
+        'description': 'Tracked 3+ income sources',
+    },
+    'big_saver': {
+        'name': 'Big Saver',
+        'icon': '💰',
+        'description': 'Saved over ₹10,000 total',
+    },
+    'analytics_pro': {
+        'name': 'Analytics Pro',
+        'icon': '📊',
+        'description': 'Visited analytics 10+ times',
+    },
+    'century_club': {
+        'name': 'Century Club',
+        'icon': '💯',
+        'description': 'Logged 100 transactions',
+    },
+    'recurring_champion': {
+        'name': 'Recurring Champion',
+        'icon': '🔄',
+        'description': 'Managed 5+ recurring expenses',
+    },
+}

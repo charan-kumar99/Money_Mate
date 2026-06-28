@@ -36,8 +36,8 @@ if os.environ.get('DATABASE_URL'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    # Local development - use local PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Passw0rd@localhost:5432/money_mate'
+    # Local development - use SQLite for easier setup
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///money_mate.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a3f9c2d5e6b7f8a9c0d1e2f3b4a5c6d7e8f9b0c1d2e3f4a5b6c7d8e9f0a1b2c3')
@@ -53,7 +53,13 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your-app-password
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'your-email@gmail.com')
 
 # Configure Gemini client
-client = genai.Client(api_key=app.config['GEMINI_API_KEY'])
+client = None
+if app.config['GEMINI_API_KEY']:
+    try:
+        client = genai.Client(api_key=app.config['GEMINI_API_KEY'])
+    except Exception as e:
+        print(f"Warning: Could not initialize Gemini client: {e}")
+        client = None
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -244,6 +250,26 @@ def index():
             )
             db.session.add(new_expense)
             db.session.commit()
+            
+            # Check budget limits and trigger alert emails
+            try:
+                user = User.query.get(session['user_id'])
+                if user and user.notify_budget_alerts:
+                    today_date = datetime.now()
+                    budget = Budget.query.filter_by(category=category, month=today_date.month, year=today_date.year).first()
+                    if budget:
+                        first_day = today_date.date().replace(day=1)
+                        month_expenses = Expense.query.filter(Expense.date >= first_day, Expense.category == category).all()
+                        total_spent = sum(float(e.amount) for e in month_expenses)
+                        budget_amt = float(budget.amount)
+                        
+                        if budget_amt > 0:
+                            pct = (total_spent / budget_amt) * 100
+                            if pct >= 80:
+                                send_budget_alert_email(user, budget, total_spent, pct)
+            except Exception as e:
+                print(f"Error checking budget alert on add: {e}")
+
             flash("Expense added successfully! 🎉", "success")
         except ValueError as e:
             flash(f"Invalid input: {str(e)}", "danger")
@@ -252,6 +278,24 @@ def index():
             print("Error adding expense:", e)
             flash("Error adding expense. Please try again.", "danger")
         return redirect("/")
+
+    # Check recurring due items once per session
+    if 'due_reminders_checked' not in session:
+        session['due_reminders_checked'] = True
+        try:
+            user = User.query.get(session['user_id'])
+            if user and user.notify_due_reminders:
+                today_date = datetime.now().date()
+                three_days_later = today_date + timedelta(days=3)
+                due_items = RecurringExpense.query.filter(
+                    RecurringExpense.is_active == True,
+                    RecurringExpense.next_due >= today_date,
+                    RecurringExpense.next_due <= three_days_later
+                ).all()
+                if due_items:
+                    send_due_reminder_email(user, due_items)
+        except Exception as e:
+            print(f"Error checking due recurring expenses: {e}")
 
     # Apply filters
     category_filter = request.args.get("category_filter", "")
@@ -1301,6 +1345,26 @@ def edit_expense(expense_id):
                 return render_template("edit.html", expense=expense, categories=categories)
             
             db.session.commit()
+            
+            # Check budget limits and trigger alert emails
+            try:
+                user = User.query.get(session['user_id'])
+                if user and user.notify_budget_alerts:
+                    today_date = datetime.now()
+                    budget = Budget.query.filter_by(category=expense.category, month=today_date.month, year=today_date.year).first()
+                    if budget:
+                        first_day = today_date.date().replace(day=1)
+                        month_expenses = Expense.query.filter(Expense.date >= first_day, Expense.category == expense.category).all()
+                        total_spent = sum(float(e.amount) for e in month_expenses)
+                        budget_amt = float(budget.amount)
+                        
+                        if budget_amt > 0:
+                            pct = (total_spent / budget_amt) * 100
+                            if pct >= 80:
+                                send_budget_alert_email(user, budget, total_spent, pct)
+            except Exception as e:
+                print(f"Error checking budget alert on edit: {e}")
+
             flash("Expense successfully updated! ✅", "success")
             return redirect("/")
         except ValueError:
@@ -1384,6 +1448,13 @@ def ai_tips_api():
     currency = get_currency()
     
     try:
+        user = User.query.get(session['user_id'])
+        api_key = user.gemini_api_key if user and user.gemini_api_key else app.config.get('GEMINI_API_KEY')
+        if not api_key:
+            return jsonify({'success': False, 'error': 'Gemini API key not configured. Please add your key in the Settings page.'})
+            
+        user_client = genai.Client(api_key=api_key)
+
         # Gather user context based on page
         context_parts = []
         
@@ -1467,7 +1538,7 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
         
         for model_name in models_to_try:
             try:
-                response = client.models.generate_content(
+                response = user_client.models.generate_content(
                     model=model_name,
                     contents=prompt,
                     config=types.GenerateContentConfig(
@@ -1498,12 +1569,15 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
 def ai_support_api():
     """API endpoint for AI chatbot using Google Gemini"""
     try:
-        # Check if API key is configured
-        if not app.config.get('GEMINI_API_KEY') or app.config['GEMINI_API_KEY'] == '':
+        user = User.query.get(session['user_id'])
+        api_key = user.gemini_api_key if user and user.gemini_api_key else app.config.get('GEMINI_API_KEY')
+        if not api_key:
             return jsonify({
                 'success': False,
-                'error': 'AI features are currently unavailable. Please contact the administrator to configure the Gemini API key.'
+                'error': 'AI support is not configured. Please go to the Settings page and add your Gemini API Key.'
             })
+        
+        user_client = genai.Client(api_key=api_key)
         
         data = request.get_json()
         user_message = data.get('message', '')
@@ -1629,7 +1703,7 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
         for model_name in models_to_try:
             for attempt in range(max_retries):
                 try:
-                    response = client.models.generate_content(
+                    response = user_client.models.generate_content(
                         model=model_name,
                         contents=contents,
                         config=types.GenerateContentConfig(
@@ -1875,6 +1949,224 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
     
     return tips_data
 
+# ==================== BADGE / ACHIEVEMENT SYSTEM ====================
+from models import Achievement, BADGE_CATALOG
+
+def check_and_award_badges(user_id):
+    """Check user activity and award any earned badges"""
+    awarded = []
+    existing = {a.badge_key for a in Achievement.query.filter_by(user_id=user_id).all()}
+    
+    def award(key):
+        if key not in existing:
+            db.session.add(Achievement(user_id=user_id, badge_key=key))
+            awarded.append(key)
+            existing.add(key)
+    
+    # first_expense: Logged first expense
+    if Expense.query.first():
+        award('first_expense')
+    
+    # expense_streak_7: 7 distinct days with expenses
+    from sqlalchemy import func
+    distinct_days = db.session.query(func.count(func.distinct(Expense.date))).scalar() or 0
+    if distinct_days >= 7:
+        award('expense_streak_7')
+    
+    # budget_master: any month where all budgets stayed under limit
+    today = datetime.now()
+    budgets = Budget.query.filter_by(month=today.month, year=today.year).all()
+    if budgets:
+        first_day = today.date().replace(day=1)
+        month_expenses = Expense.query.filter(Expense.date >= first_day).all()
+        cat_spending = defaultdict(float)
+        for e in month_expenses:
+            cat_spending[e.category] += float(e.amount)
+        all_under = all(cat_spending.get(b.category, 0) <= float(b.amount) for b in budgets)
+        if all_under:
+            award('budget_master')
+    
+    # savings_starter: created first savings goal
+    if SavingsGoal.query.first():
+        award('savings_starter')
+    
+    # goal_crusher: completed a savings goal
+    completed_goals = SavingsGoal.query.all()
+    if any(g.is_completed for g in completed_goals):
+        award('goal_crusher')
+    
+    # income_diversifier: 3+ distinct income sources
+    distinct_sources = db.session.query(func.count(func.distinct(Income.source))).scalar() or 0
+    if distinct_sources >= 3:
+        award('income_diversifier')
+    
+    # big_saver: total savings >= 10000
+    total_saved = sum(float(g.current_amount) for g in SavingsGoal.query.all())
+    if total_saved >= 10000:
+        award('big_saver')
+    
+    # century_club: 100+ expenses
+    expense_count = Expense.query.count()
+    if expense_count >= 100:
+        award('century_club')
+    
+    # recurring_champion: 5+ recurring expenses
+    recurring_count = RecurringExpense.query.count()
+    if recurring_count >= 5:
+        award('recurring_champion')
+    
+    if awarded:
+        db.session.commit()
+    
+    return awarded
+
+# ==================== SETTINGS PAGE ====================
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    """User settings page for API keys, notifications, and preferences"""
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        # Update AI settings
+        user.gemini_api_key = request.form.get('gemini_api_key', '')
+        user.ai_personality = request.form.get('ai_personality', 'balanced')
+        user.preferred_currency = request.form.get('preferred_currency', '₹')
+        
+        # Update notification preferences (checkboxes: present = True, absent = False)
+        user.notify_budget_alerts = 'notify_budget_alerts' in request.form
+        user.notify_due_reminders = 'notify_due_reminders' in request.form
+        user.notify_monthly_digest = 'notify_monthly_digest' in request.form
+        user.notify_savings_milestones = 'notify_savings_milestones' in request.form
+        
+        db.session.commit()
+        
+        # Apply currency preference
+        set_currency(user.preferred_currency)
+        
+        flash('Settings saved successfully!', 'success')
+        return redirect(url_for('settings'))
+    
+    # Get achievements
+    achievements = Achievement.query.filter_by(user_id=user.id).all()
+    unlocked_keys = {a.badge_key for a in achievements}
+    
+    # Check for new badges
+    check_and_award_badges(user.id)
+    achievements = Achievement.query.filter_by(user_id=user.id).all()
+    unlocked_keys = {a.badge_key for a in achievements}
+    
+    return render_template('settings.html',
+                         user=user,
+                         achievements=achievements,
+                         unlocked_keys=unlocked_keys,
+                         badge_catalog=BADGE_CATALOG,
+                         total_badges=len(BADGE_CATALOG))
+
+@app.route('/api/test-gemini-key', methods=['POST'])
+@login_required
+@csrf.exempt
+def test_gemini_key():
+    """Test if a Gemini API key is valid"""
+    try:
+        data = request.get_json()
+        api_key = data.get('api_key', '')
+        
+        if not api_key.strip():
+            return jsonify({'success': False, 'error': 'No API key provided'})
+        
+        test_client = genai.Client(api_key=api_key)
+        response = test_client.models.generate_content(
+            model='gemini-2.0-flash-lite',
+            contents='Say "Hello" in one word.'
+        )
+        
+        if response and response.text:
+            return jsonify({'success': True, 'message': 'API key is valid'})
+        else:
+            return jsonify({'success': False, 'error': 'No response from API'})
+    except Exception as e:
+        error_msg = str(e)
+        if 'API_KEY_INVALID' in error_msg:
+            return jsonify({'success': False, 'error': 'Invalid API key'})
+        elif 'PERMISSION_DENIED' in error_msg:
+            return jsonify({'success': False, 'error': 'Permission denied — enable the Generative Language API'})
+        elif 'RESOURCE_EXHAUSTED' in error_msg or '429' in error_msg:
+            return jsonify({'success': False, 'error': 'Gemini API Rate Limit/Quota Exceeded. Please wait a moment or check your limits in Google AI Studio.'})
+        return jsonify({'success': False, 'error': f'Error: {error_msg[:100]}'})
+
+# ==================== EMAIL NOTIFICATION HELPERS ====================
+def send_budget_alert_email(user, budget, spent, percentage):
+    """Send email when budget threshold is exceeded"""
+    try:
+        if not user.email or not user.notify_budget_alerts:
+            return
+        currency = user.preferred_currency or '₹'
+        subject = f"⚠️ Budget Alert: {budget.category} at {percentage:.0f}%"
+        body = f"""Hi {user.username},
+
+Your {budget.category} budget is at {percentage:.0f}% usage this month.
+
+Budget: {currency}{float(budget.amount):,.2f}
+Spent: {currency}{spent:,.2f}
+Remaining: {currency}{max(0, float(budget.amount) - spent):,.2f}
+
+{'🚨 You have exceeded your budget!' if percentage >= 100 else '⚠️ You are approaching your budget limit.'}
+
+Review your spending in Money Mate to stay on track.
+
+— Money Mate"""
+        
+        # Development Mode Console fallback
+        if not app.config.get('MAIL_USERNAME') or app.config['MAIL_USERNAME'] == 'your-email@gmail.com':
+            print("\n" + "="*60)
+            print(f"📧 [DEVELOPMENT MODE] BUDGET ALERT EMAIL TO: {user.email}")
+            print(f"Subject: {subject}")
+            print("-"*60)
+            print(body)
+            print("="*60 + "\n")
+            return
+
+        msg = Message(subject, recipients=[user.email])
+        msg.body = body
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to send budget alert email: {e}")
+
+def send_due_reminder_email(user, due_items):
+    """Send reminder for recurring expenses due soon"""
+    try:
+        if not user.email or not user.notify_due_reminders or not due_items:
+            return
+        currency = user.preferred_currency or '₹'
+        items_text = "\n".join([f"  • {item.name}: {currency}{float(item.amount):,.2f} (due {item.next_due.strftime('%d %b %Y')})" for item in due_items])
+        subject = f"📅 Upcoming Due Payments ({len(due_items)} items)"
+        body = f"""Hi {user.username},
+
+You have {len(due_items)} recurring expense(s) due within the next 3 days:
+
+{items_text}
+
+Log in to Money Mate to manage your payments.
+
+— Money Mate"""
+        
+        # Development Mode Console fallback
+        if not app.config.get('MAIL_USERNAME') or app.config['MAIL_USERNAME'] == 'your-email@gmail.com':
+            print("\n" + "="*60)
+            print(f"📧 [DEVELOPMENT MODE] RECURRING DUE REMINDER TO: {user.email}")
+            print(f"Subject: {subject}")
+            print("-"*60)
+            print(body)
+            print("="*60 + "\n")
+            return
+
+        msg = Message(subject, recipients=[user.email])
+        msg.body = body
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to send due reminder email: {e}")
+
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])
 @csrf.exempt
@@ -1893,6 +2185,12 @@ def login():
             # Generate tips on login
             tips_data = generate_tips_on_login()
             session['ai_tips'] = tips_data
+            
+            # Check and award any new badges
+            try:
+                check_and_award_badges(user.id)
+            except Exception as e:
+                print(f"Badge check error: {e}")
             
             return redirect(url_for('index'))
         else:

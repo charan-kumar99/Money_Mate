@@ -13,6 +13,7 @@
         rel="stylesheet">
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
 </head>
 
@@ -87,6 +88,13 @@
                         href="{{ url_for('recurring') }}">
                         <i class="fas fa-repeat"></i>
                         <span>Recurring</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}"
+                        href="{{ url_for('settings') }}">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
                     </a>
                 </li>
 
