@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Numeric
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -8,17 +8,16 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
+    sentinel_id = db.Column(db.String(64), nullable=True, index=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    password_hash = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
-    # Settings fields
     gemini_api_key = db.Column(db.String(255), default='')
     preferred_currency = db.Column(db.String(10), default='₹')
-    ai_personality = db.Column(db.String(50), default='balanced')  # frugal, balanced, ambitious
+    ai_personality = db.Column(db.String(50), default='balanced')
     
-    # Notification preferences
     notify_budget_alerts = db.Column(db.Boolean, default=True)
     notify_due_reminders = db.Column(db.Boolean, default=True)
     notify_monthly_digest = db.Column(db.Boolean, default=False)
@@ -28,6 +27,8 @@ class User(db.Model):
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
     
     def __repr__(self):
@@ -40,7 +41,7 @@ class Expense(db.Model):
     category = db.Column(db.String(50), nullable=False, index=True)
     amount = db.Column(Numeric(precision=10, scale=2), nullable=False)
     note = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     payment_method = db.Column(db.String(20), default='cash', index=True)
 
     def __repr__(self):
@@ -53,7 +54,7 @@ class Budget(db.Model):
     amount = db.Column(Numeric(precision=10, scale=2), nullable=False)
     month = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     __table_args__ = (
         db.UniqueConstraint('category', 'month', 'year', name='uix_category_month_year'),
         db.Index('idx_month_year', 'month', 'year'),
@@ -69,7 +70,7 @@ class SavingsGoal(db.Model):
     target_amount = db.Column(Numeric(precision=10, scale=2), nullable=False)
     current_amount = db.Column(Numeric(precision=10, scale=2), default=0)
     deadline = db.Column(db.Date)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     @property
     def progress_percentage(self):
@@ -91,7 +92,7 @@ class Income(db.Model):
     source = db.Column(db.String(50), nullable=False)
     amount = db.Column(Numeric(precision=10, scale=2), nullable=False)
     note = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<Income {self.source}: {self.amount}>'
@@ -102,10 +103,10 @@ class RecurringExpense(db.Model):
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     amount = db.Column(Numeric(precision=10, scale=2), nullable=False)
-    frequency = db.Column(db.String(20), nullable=False)  # daily, weekly, monthly, yearly
+    frequency = db.Column(db.String(20), nullable=False)
     next_due = db.Column(db.Date, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<RecurringExpense {self.name}: {self.amount} ({self.frequency})>'
@@ -114,8 +115,8 @@ class Achievement(db.Model):
     __tablename__ = 'achievement'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    badge_key = db.Column(db.String(50), nullable=False)  # unique key for the badge type
-    unlocked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    badge_key = db.Column(db.String(50), nullable=False)
+    unlocked_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         db.UniqueConstraint('user_id', 'badge_key', name='uix_user_badge'),

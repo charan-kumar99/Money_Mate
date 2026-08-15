@@ -322,7 +322,7 @@
                         <div class="flex-grow-1">
                             <span class="fw-bold">{{ category }}</span>
                             <div class="progress mt-1" style="height: 6px;">
-                                <div class="progress-bar" style="width: {{ (amount / total * 100) if total > 0 else 0 }}%"></div>
+                                <div class="progress-bar" style="--progress-width: {{ (amount / total * 100) if total > 0 else 0 }}%; width: var(--progress-width);"></div>
                             </div>
                         </div>
                         <span class="fw-bold text-primary ms-3">{{ currency }}{{ "%.2f"|format(amount) }}</span>

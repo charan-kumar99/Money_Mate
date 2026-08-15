@@ -4,353 +4,185 @@
 [![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-black?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-316192?style=for-the-badge&logo=postgresql)](https://neon.tech/)
+[![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini-orange?style=for-the-badge&logo=google)](https://ai.google.dev/)
 
-A comprehensive web application built with Flask, providing powerful personal finance management tools. Features include expense tracking, advanced analytics, budgeting, savings goals, income tracking, and recurring expense management with multi-currency support.
+A modern, full-featured personal finance and expense tracking web application built with **Flask**, **SQLAlchemy**, and **Bootstrap 5**, integrated with **Sentinel API Security Lab** authentication and **Google Gemini AI** financial assistance.
+
+---
 
 ## 🚀 Live Demo
 
-**Try it now:** [https://money-mate-e33v.onrender.com](https://money-mate-e33v.onrender.com)
+**Experience Money Mate Live:** [https://money-mate-e33v.onrender.com](https://money-mate-e33v.onrender.com)
 
-> 🎯 Create an account and start managing your finances today!
+---
 
-## ✨ Key Features
+## ✨ Features Overview
 
-### 1. Income Tracking 📈
-- Track income from multiple sources (Salary, Freelance, Business, etc.)
-- View total income vs expenses
-- Calculate net savings automatically
-- Monthly income trend charts
+### 🔐 1. Authentication & Security (Sentinel API)
+- **Argon2id Authentication**: Secure registration and login powered by Sentinel API Security Lab.
+- **6-Digit OTP Email Verification**: Verifies email authenticity on signup and password reset.
+- **Resend OTP Support**: Instant one-click OTP resend mechanism.
+- **Password Reset Flow**: Safe OTP-based password recovery.
+- **CSRF Protection**: Form integrity protected via `Flask-WTF` CSRF tokens.
 
-### 2. Recurring Expenses 🔄
-- Manage subscriptions and recurring payments
-- Track due dates with reminders
-- Pause/activate recurring expenses
-- Calculate total monthly recurring costs
-- Visual indicators for due/overdue payments
+### 💳 2. Expense Tracking & Management
+- **Quick Logging**: Add expenses with date, category, payment method, amount, and notes.
+- **Multi-Filter Search**: Filter by category, payment method (Cash, Credit Card, Debit Card, Bank Transfer, Digital Wallet), and date ranges (7 days, 30 days, month, custom).
+- **Sortable Records**: Sort transactions by date, amount, or category.
+- **Full CRUD Support**: Edit or delete transactions with instant balance recalculation.
 
-### 3. Multi-Currency Support 💱
-- Support for ₹ (INR), $ (USD), € (EUR), £ (GBP), ¥ (JPY)
-- Easy currency switching from sidebar
-- Currency preference stored in session
+### 📊 3. Interactive Analytics & Visualizations
+- **Income vs. Expenses**: Monthly comparative overview with net savings metrics.
+- **12-Month Spending Trend**: Interactive Chart.js trend line chart.
+- **Category Breakdown**: Dynamic pie charts showing spending distribution.
+- **Payment Method Distribution**: Doughnut charts displaying payment method preferences.
+- **Daily / Weekly / Monthly Averages**: Automated run-rate calculations.
 
-### 4. Enhanced Analytics 📊
-- Income vs Expenses comparison charts
-- 12-month trend analysis
-- Category breakdown with percentages
-- Payment method distribution
-- Daily, weekly, and monthly averages
+### 💼 4. Category Budgeting & Smart Alerts
+- **Monthly Category Limits**: Set customized spending budgets per category and month.
+- **Visual Progress Bars**: Color-coded progress indicators (`success` < 80%, `warning` 80-99%, `danger` ≥ 100%).
+- **Automated Email Alerts**: Automatic email notifications when spending reaches 80% or exceeds budget limits.
 
-### 5. Improved Budget Management 💼
-- Visual progress bars with color coding
-- Total budget overview
-- Real-time spending tracking
-- Budget alerts (80%, 100% thresholds)
+### 🎯 5. Savings Goals Tracker
+- **Target Tracking**: Set targets, log contributions, and define optional target deadlines.
+- **Progress Visuals**: Progress bars tracking completion percentage toward each financial milestone.
+- **Celebration Confetti**: Dynamic particle animation triggers when any goal reaches 100% completion.
 
-### 6. Enhanced Savings Goals 🎯
-- Progress tracking with visual indicators
-- Deadline management with countdown
-- Multiple concurrent goals
-- Completed goal celebrations
-- Overall progress calculation
+### 💵 6. Income Tracking
+- **Multi-Source Logging**: Track salary, freelance, business, investments, and gifts.
+- **Net Savings Calculation**: Automatic calculation of `Total Income - Total Expenses`.
+- **Monthly Income Trends**: Visual representation of incoming cash flow over time.
 
-### 7. Better User Experience ✨
-- Auto-dismissing flash messages
-- Smooth animations and transitions
-- Improved card layouts
-- Better color scheme and gradients
-- Loading states and error handling
-- Responsive mobile design
+### 🔄 7. Recurring Expenses & Bill Reminders
+- **Subscription Management**: Track Netflix, Spotify, gym memberships, utilities, and rent.
+- **Flexible Frequencies**: Daily, Weekly, Monthly, and Yearly intervals.
+- **Next Due Tracking**: Automatic date tracking for upcoming billing cycles.
+- **Email Reminders**: Automated email reminders sent 3 days before upcoming payments.
+- **Active / Pause Toggles**: Temporarily pause subscriptions without deleting them.
 
-### 8. Security Improvements 🔒
-- CSRF protection on all forms
-- Input sanitization
-- SQL injection prevention
-- XSS protection
+### 🤖 8. Google Gemini AI Assistance
+- **Floating AI Chatbot**: Interactive financial advisor with live context of your actual financial data (income, recent spending, budgets, savings goals).
+- **Personalized Tips**: AI-generated suggestions tailored to your budget, savings goals, and recurring expenses.
+- **Custom AI Personalities**: Configure AI tone in Settings (**Frugal**, **Balanced**, or **Ambitious**).
 
-## 📦 Installation
+### 🏆 9. Gamification & Achievement Badges
+- **10 Milestone Badges**: Unlock achievements for logging expenses, maintaining streaks, staying under budget, and hitting savings milestones.
+- **Badge Showcase**: View unlocked badges and descriptions in the Settings dashboard.
 
-### Prerequisites
-- Python 3.8+
-- pip (Python package manager)
+### 💱 10. Multi-Currency Engine
+- **Live Currency Conversion**: Real-time rates fetched from Open Exchange Rates and Frankfurter APIs.
+- **Supported Currencies**: ₹ (INR), $ (USD), € (EUR), £ (GBP), ¥ (JPY).
+- **Session & Profile Persistence**: Selected currency applies globally across all templates and reports.
 
-### Step 1: Clone the Project
+### 📄 11. Complete Export Suite
+- **Comprehensive CSV Export**: Exports complete expense, income, budget, savings, and summary datasets.
+- **Formatted PDF Report**: Beautifully styled PDF reports generated with `ReportLab` featuring financial summary tables, expense lists, and budget usage metrics.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Backend**: Python 3.11, Flask 3.0, Gunicorn
+- **Database & ORM**: PostgreSQL (Neon Cloud) / SQLite (Local), SQLAlchemy 2.0, Flask-Migrate (Alembic)
+- **Security**: Sentinel API Security Lab, Flask-WTF CSRF, Werkzeug
+- **AI & Integrations**: Google Gemini API (`google-genai` SDK), Requests
+- **Document Generation**: ReportLab (PDF), Python CSV / IO
+- **Email**: Flask-Mail (SMTP / Gmail)
+- **Frontend**: HTML5, CSS3 (Custom Dark Theme), Bootstrap 5.3, Font Awesome 6, Chart.js, SweetAlert2, Canvas-Confetti
+
+---
+
+## 📦 Local Installation & Setup
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/charan-kumar99/Money_Mate.git
 cd Money_Mate
 ```
 
-### Step 2: Create Virtual Environment
+### 2. Create and Activate Virtual Environment
 ```bash
 # Windows
 python -m venv venv
 venv\Scripts\activate
 
-# Linux/Mac
+# macOS / Linux
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### Step 3: Install Dependencies
+### 3. Install Dependencies
 ```bash
-# Install all dependencies from requirements.txt
 pip install -r requirements.txt
 ```
 
-### Step 4: Initialize Database
-```bash
-# Create migrations folder (if not exists)
-flask db init
+### 4. Configure Environment Variables
+Create a `.env` file in the project root:
+```env
+SECRET_KEY=your-random-secret-key
+DATABASE_URL=sqlite:///money_mate.db
+GEMINI_API_KEY=your-gemini-api-key-optional
 
-# Create migration
-flask db migrate -m "Initial migration"
-
-# Apply migration
-flask db upgrade
+# Email setup (Optional for production emails; console mode used if omitted)
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-gmail-app-password
 ```
 
-### Step 5: Run the Application
+### 5. Run the Application
 ```bash
 python app.py
 ```
+Open your browser at `http://127.0.0.1:5000`.
 
-The application will be available at `http://127.0.0.1:5000`
+---
+
+## ☁️ Deployment (Render)
+
+1. Push your repository to **GitHub**.
+2. On [Render](https://render.com), create a new **Web Service** linked to your repo.
+3. Configure the service:
+   - **Environment**: Python
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app`
+4. Set the following **Environment Variables** in the Render Dashboard:
+   - `SECRET_KEY`: A strong random string
+   - `DATABASE_URL`: Your Neon PostgreSQL connection string (`postgresql://...`)
+   - `GEMINI_API_KEY`: Your Google Gemini API key
+   - `MAIL_USERNAME`: Gmail address (for email alerts/OTP)
+   - `MAIL_PASSWORD`: Gmail App Password (16 characters)
+
+---
 
 ## 📁 Project Structure
 
 ```
 Money_Mate/
-├── app.py                 # Main application file
-├── models.py              # Database models
-├── requirements.txt       # Python dependencies
-├── templates/
-│   ├── base.html         # Base template
-│   ├── index.html        # Dashboard
-│   ├── analytics.html    # Analytics page
-│   ├── budgets.html      # Budget management
-│   ├── savings.html      # Savings goals
-│   ├── income.html       # Income tracking
-│   └── recurring.html    # Recurring expenses
+├── app.py              # Main Flask application, routes, AI & export logic
+├── models.py           # SQLAlchemy database models & badge catalog
+├── requirements.txt    # Production dependencies
+├── runtime.txt         # Python runtime version for deployment (3.11.10)
+├── Procfile            # Deployment process definition
 ├── static/
-│   └── style.css         # Custom styles
-├── migrations/           # Database migrations
-└── instance/
-    └── expenses.db       # SQLite database (auto-created)
+│   ├── style.css       # Custom styles and theme variables
+│   └── charts.js       # Chart.js initialization and config
+├── templates/
+│   ├── base.html       # Base layout with sidebar, navbar, toasts & AI widget
+│   ├── index.html      # Main dashboard & expense manager
+│   ├── analytics.html  # Comprehensive analytics & visual reports
+│   ├── budgets.html    # Category budget tracking & limits
+│   ├── savings.html    # Financial goals & progress tracking
+│   ├── income.html     # Income records & net savings
+│   ├── recurring.html  # Recurring bills & subscription manager
+│   ├── settings.html   # User preferences, AI settings & badge showcase
+│   ├── edit.html       # Transaction editor
+│   ├── login.html      # Sentinel API login
+│   ├── signup.html     # Sentinel API registration
+│   ├── verify_otp.html # 6-digit OTP verification
+│   ├── forgot_password.html # Password reset initiation
+│   └── reset_password.html  # Set new password
 ```
-
-## 🎨 Features Overview
-
-### Dashboard
-- Quick expense entry form
-- Real-time statistics (Total, Income, Net Savings)
-- Advanced filters (Category, Payment Method, Date Range, Search)
-- Sortable expense list
-- Top categories chart
-- Monthly spending trend
-- CSV export functionality
-
-### Analytics
-- Total income and expenses overview
-- Income vs Expenses comparison (12 months)
-- Category breakdown (pie chart)
-- Payment methods distribution
-- Detailed category statistics table
-- Daily, weekly, and monthly averages
-
-### Budget Management
-- Create category-based budgets
-- Visual progress indicators
-- Budget alerts (color-coded)
-- Total budget overview
-- Monthly budget tracking
-- Budget tips and suggestions
-
-### Savings Goals
-- Set multiple savings goals
-- Track progress with visual bars
-- Deadline management
-- Overall savings progress
-- Easy updates to current amounts
-- Completion indicators
-
-### Income Tracking
-- Record income from various sources
-- Monthly income trends
-- Income vs Expenses comparison
-- Net savings calculation
-- Easy income management
-
-### Recurring Expenses
-- Track subscriptions and recurring payments
-- Due date reminders
-- Frequency management (Daily, Weekly, Monthly, Yearly)
-- Pause/activate feature
-- Visual due date indicators
-- Total monthly recurring cost calculation
-
-## 🔧 Configuration
-
-### Change Secret Key (Important for Production!)
-In `app.py`, change:
-```python
-app.config['SECRET_KEY'] = 'your_secret_key_here_change_in_production'
-```
-To a strong, random secret key:
-```python
-app.config['SECRET_KEY'] = 'your-actual-secret-key-here'
-```
-
-### Database Configuration
-Default uses SQLite. To use PostgreSQL or MySQL:
-```python
-# PostgreSQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://username:password@localhost/dbname'
-
-# MySQL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/dbname'
-```
-
-## 🎯 Usage Tips
-
-### Best Practices
-1. **Regular Updates**: Add expenses daily for accurate tracking
-2. **Categorize Properly**: Use consistent category names
-3. **Set Realistic Budgets**: Base budgets on historical spending
-4. **Track Income**: Record all income sources for accurate net savings
-5. **Review Analytics**: Check analytics monthly to identify spending patterns
-6. **Use Recurring**: Set up all subscriptions and recurring payments
-7. **Set Goals**: Create savings goals to stay motivated
-
-### Quick Actions
-- **Add Expense**: Use the left sidebar form on Dashboard
-- **View Analytics**: Click Analytics in the sidebar
-- **Set Budget**: Go to Budgets page and enter category + amount
-- **Track Income**: Use Income page to record all income
-- **Manage Subscriptions**: Use Recurring page for subscriptions
-
-## 🐛 Troubleshooting
-
-### Database Errors
-```bash
-# Reset database
-flask db downgrade
-flask db upgrade
-
-# Or delete database and recreate (Windows)
-del instance\expenses.db
-flask db upgrade
-
-# Linux/Mac
-rm instance/expenses.db
-flask db upgrade
-```
-
-### Import Errors
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --upgrade
-```
-
-### Port Already in Use
-```python
-# In app.py, change the port
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)  # Change 5000 to 5001
-```
-
-## 🔐 Security Notes
-
-### Web Application Security
-- ✅ CSRF protection enabled on all forms
-- ✅ SQL injection prevention through SQLAlchemy ORM
-- ✅ Input validation and sanitization
-- ✅ Secure session management
-- ✅ XSS protection
-
-### Production Considerations
-- ⚠️ Change SECRET_KEY in production
-- ⚠️ Set debug=False in production
-- ⚠️ Use HTTPS/SSL in production
-- ⚠️ Implement proper error logging
-- ⚠️ Use a production-grade database (PostgreSQL/MySQL)
-- ⚠️ Set up proper backup strategies
-
-## 📱 Browser Support
-
-- ✅ Chrome (Recommended)
-- ✅ Firefox
-- ✅ Safari
-- ✅ Edge
-- ✅ Mobile browsers (Responsive design)
-
-## 🎨 Customization
-
-### Change Theme Colors
-Edit `static/style.css`:
-```css
-:root {
-    --primary: #6366f1;        /* Primary color */
-    --success: #10b981;         /* Success color */
-    --danger: #ef4444;          /* Danger color */
-    --background: #0f172a;      /* Background color */
-}
-```
-
-### Add New Categories
-Categories are dynamically created. Just type a new category name when adding an expense!
-
-### Payment Methods
-Available payment methods:
-- Cash
-- Credit Card
-- Debit Card
-- Bank Transfer
-- Digital Wallet
-
-## 📈 Future Enhancements (Roadmap)
-
-- [ ] User authentication and multi-user support
-- [ ] Email notifications for budgets and due dates
-- [ ] PDF export for reports
-- [ ] Mobile app (React Native/Flutter)
-- [ ] Bank account integration
-- [ ] Receipt photo upload
-- [ ] Advanced forecasting and predictions
-- [ ] Shared budgets for families
-- [ ] Tax calculation features
-- [ ] Investment tracking
-
-## 📄 License
-
-This project is open source and available for personal and commercial use.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-## 👨‍💻 Author
-
-Created with ❤️ by Charan Kumar for better financial management
-
-## 📞 Support
-
-If you encounter any issues:
-1. Check the Troubleshooting section
-2. Ensure all dependencies are installed correctly
-3. Verify database migrations are applied
-4. Check the console for error messages
-
-## 🎉 Acknowledgments
-
-- Flask Framework
-- Bootstrap 5
-- Font Awesome Icons
-- Chart.js
-- SQLAlchemy
 
 ---
 
-**Version:** 2.0.0  
-**Last Updated:** January 2025  
-**Status:** ✅ Production Ready
-
-Happy expense tracking! 💰📊✨
+## 📄 License
+This project is open-source and available under the MIT License.

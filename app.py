@@ -1,46 +1,49 @@
 import os
-from flask import Flask, render_template, request, redirect, send_file, flash, jsonify, session, url_for
+import io
+import csv
+import json
+import time
+import random
+import string
+import logging
+import calendar
+from calendar import monthrange
+from functools import wraps
 from datetime import datetime, timedelta
 from collections import defaultdict
-import csv
-import io
-import calendar
+
+from flask import Flask, render_template, request, redirect, send_file, flash, jsonify, session, url_for
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from models import db, Expense, Budget, SavingsGoal, Income, RecurringExpense, User
-from calendar import monthrange
-from werkzeug.security import generate_password_hash
-import json
+from flask_mail import Mail, Message
 from google import genai
+from google.genai import types
 import requests
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-from flask_mail import Mail, Message
-import random
-import string
+from reportlab.lib.enums import TA_CENTER
+
+from dotenv import load_dotenv
+load_dotenv()
+
+from models import db, Expense, Budget, SavingsGoal, Income, RecurringExpense, User, Achievement, BADGE_CATALOG
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
-# Database Configuration - supports both local and cloud
-# For local: uses local PostgreSQL
-# For production: uses DATABASE_URL environment variable (Neon, Supabase, etc.)
 if os.environ.get('DATABASE_URL'):
-    # Production - use cloud database
     database_url = os.environ.get('DATABASE_URL')
-    # Fix for SQLAlchemy (some providers use postgres:// instead of postgresql://)
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
-    # Local development - use SQLite for easier setup
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///money_mate.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a3f9c2d5e6b7f8a9c0d1e2f3b4a5c6d7e8f9b0c1d2e3f4a5b6c7d8e9f0a1b2c3')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['WTF_CSRF_TIME_LIMIT'] = None
 app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', '')
 
@@ -48,23 +51,164 @@ app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', '')
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your-email@gmail.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your-app-password')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'your-email@gmail.com')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
 
-# Configure Gemini client
+FALLBACK_TIPS = {
+    'budgets': [
+        'Set realistic budgets based on past spending',
+        'Review and adjust budgets monthly',
+        'Track variable expenses separately',
+        'Include savings as a budget category'
+    ],
+    'savings': [
+        'Set specific and measurable savings goals',
+        'Automate your savings with recurring transfers',
+        'Start with small amounts and increase gradually',
+        'Track your progress regularly to stay motivated'
+    ],
+    'recurring': [
+        'Review recurring expenses quarterly',
+        'Look for subscription services you no longer use',
+        'Negotiate better rates on regular bills',
+        'Set reminders before renewal dates'
+    ]
+}
+
 client = None
 if app.config['GEMINI_API_KEY']:
     try:
         client = genai.Client(api_key=app.config['GEMINI_API_KEY'])
     except Exception as e:
-        print(f"Warning: Could not initialize Gemini client: {e}")
+        logger.warning(f"Could not initialize Gemini client: {e}")
         client = None
 
 db.init_app(app)
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
 mail = Mail(app)
+
+SENTINEL_API_URL = os.environ.get('SENTINEL_API_URL', 'https://sentinel-api-zl7e.onrender.com/api/v1').rstrip('/')
+SENTINEL_CLIENT_ID = os.environ.get('SENTINEL_CLIENT_ID', 'moneymate')
+
+def sentinel_register(username, email, password):
+    """Register a new user in Sentinel API Security Lab"""
+    url = f"{SENTINEL_API_URL}/auth/register"
+    payload = {
+        "username": username.strip(),
+        "email": email.strip(),
+        "password": password,
+        "role": "User",
+        "clientId": SENTINEL_CLIENT_ID
+    }
+    headers = {"Content-Type": "application/json", "X-Client-Id": SENTINEL_CLIENT_ID}
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=45)
+        try:
+            data = res.json()
+        except Exception:
+            data = {"success": False, "message": f"Server response status: {res.status_code}"}
+        return res.status_code, data
+    except requests.exceptions.RequestException as e:
+        return 500, {"success": False, "message": f"Unable to reach Sentinel API security service: {str(e)}"}
+
+def sentinel_verify_email(email, otp):
+    """Verify email via 6-digit OTP in Sentinel API"""
+    url = f"{SENTINEL_API_URL}/auth/verify-email"
+    payload = {
+        "email": email.strip(),
+        "otp": otp.strip(),
+        "clientId": SENTINEL_CLIENT_ID
+    }
+    headers = {"Content-Type": "application/json", "X-Client-Id": SENTINEL_CLIENT_ID}
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=45)
+        try:
+            data = res.json()
+        except Exception:
+            data = {"success": False, "message": f"Server response status: {res.status_code}"}
+        return res.status_code, data
+    except requests.exceptions.RequestException as e:
+        return 500, {"success": False, "message": f"Unable to reach Sentinel API security service: {str(e)}"}
+
+def sentinel_resend_otp(email):
+    """Request a fresh OTP from Sentinel API"""
+    url = f"{SENTINEL_API_URL}/auth/resend-otp"
+    payload = {
+        "email": email.strip(),
+        "clientId": SENTINEL_CLIENT_ID
+    }
+    headers = {"Content-Type": "application/json", "X-Client-Id": SENTINEL_CLIENT_ID}
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=45)
+        try:
+            data = res.json()
+        except Exception:
+            data = {"success": False, "message": f"Server response status: {res.status_code}"}
+        return res.status_code, data
+    except requests.exceptions.RequestException as e:
+        return 500, {"success": False, "message": f"Unable to reach Sentinel API security service: {str(e)}"}
+
+def sentinel_login(username_or_email, password):
+    """Authenticate credentials with Sentinel API Argon2id engine"""
+    url = f"{SENTINEL_API_URL}/auth/login"
+    payload = {
+        "usernameOrEmail": username_or_email.strip(),
+        "password": password,
+        "clientId": SENTINEL_CLIENT_ID
+    }
+    headers = {"Content-Type": "application/json", "X-Client-Id": SENTINEL_CLIENT_ID}
+    try:
+        res = requests.post(url, json=payload, headers=headers, timeout=45)
+        try:
+            data = res.json()
+        except Exception:
+            data = {"success": False, "message": f"Server response status: {res.status_code}"}
+        return res.status_code, data
+    except requests.exceptions.RequestException as e:
+        return 500, {"success": False, "message": f"Unable to reach Sentinel API security service: {str(e)}"}
+
+def get_or_sync_local_user(user_data):
+    """
+    Syncs the authenticated Sentinel API user with Money_Mate's local database.
+    Ensures user preferences, achievements, and settings remain consistent.
+    """
+    if not user_data:
+        return None
+    
+    sentinel_id = user_data.get('id')
+    username = user_data.get('username')
+    email = user_data.get('email')
+    
+    local_user = None
+    if sentinel_id:
+        local_user = User.query.filter_by(sentinel_id=sentinel_id).first()
+    if not local_user and username:
+        local_user = User.query.filter_by(username=username).first()
+    if not local_user and email:
+        local_user = User.query.filter_by(email=email).first()
+        
+    if not local_user:
+        local_user = User(
+            username=username,
+            email=email,
+            sentinel_id=sentinel_id
+        )
+        db.session.add(local_user)
+        db.session.commit()
+    else:
+        updated = False
+        if sentinel_id and local_user.sentinel_id != sentinel_id:
+            local_user.sentinel_id = sentinel_id
+            updated = True
+        if email and local_user.email != email:
+            local_user.email = email
+            updated = True
+        if updated:
+            db.session.commit()
+            
+    return local_user
 
 # Currency conversion via API (base currency: INR)
 API_RATES_CACHE = {}
@@ -81,7 +225,7 @@ def get_exchange_rates():
                 API_RATES_CACHE = data.get('rates', {})
                 LAST_FETCHED = now
         except Exception as e:
-            print("Failed to fetch rates:", e)
+            logger.warning(f"Failed to fetch exchange rates: {e}")
     return API_RATES_CACHE
 
 SYMBOL_TO_ISO = {'₹': 'INR', '$': 'USD', '€': 'EUR', '£': 'GBP', '¥': 'JPY'}
@@ -100,7 +244,6 @@ def set_currency(currency):
     session['currency'] = currency
 
 def get_currency_rate(target_currency):
-    """Get conversion rate for selected currency"""
     rates = get_exchange_rates()
     iso = SYMBOL_TO_ISO.get(target_currency, target_currency)
     if rates and iso in rates:
@@ -108,12 +251,10 @@ def get_currency_rate(target_currency):
     return STATIC_FALLBACK.get(iso, 1.0)
 
 def convert_amount(amount, target_currency='₹'):
-    """Convert amount from INR to target currency"""
     rate = get_currency_rate(target_currency)
     return float(amount) * rate
 
 def get_conversion_info(currency):
-    """Get readable conversion information"""
     iso = SYMBOL_TO_ISO.get(currency, currency)
     if iso == 'INR':
         return None
@@ -125,7 +266,6 @@ def get_conversion_info(currency):
         return f"1 {iso} = ₹{reverse_rate:.2f}"
 
 def get_month_range(year, month):
-    """Get the first and last day of a given month"""
     start = datetime(year, month, 1).date()
     last_day = monthrange(year, month)[1]
     end = datetime(year, month, last_day).date()
@@ -133,7 +273,6 @@ def get_month_range(year, month):
 
 @app.context_processor
 def inject_global_vars():
-    """Inject global variables into all templates"""
     currency = get_currency()
     iso_code = get_currency_iso()
     return {
@@ -144,12 +283,9 @@ def inject_global_vars():
         'currency_name': iso_code
     }
 
-# Currency Cache for Frankfurter API
 converter_cache = {}
 
 def get_frankfurter_rate(from_currency, to_currency):
-    """Fetch rate from Frankfurter API with caching"""
-    # API doesn't support same currency conversion
     if from_currency == to_currency:
         return 1.0
         
@@ -168,7 +304,7 @@ def get_frankfurter_rate(from_currency, to_currency):
                 return rate
             return None
         except Exception as e:
-            print("Converter API error:", e)
+            logger.warning(f"Converter API error: {e}")
             return None
 
 @app.route('/convert', methods=['GET'])
@@ -200,7 +336,6 @@ def convert():
 
 @app.route("/set_currency/<currency>")
 def set_currency_route(currency):
-    """Change the display currency"""
     set_currency(currency)
     valid_name = SYMBOL_TO_ISO.get(currency, currency)
     flash(f"Currency changed to {valid_name}", "success")
@@ -212,7 +347,6 @@ def api_currencies():
     return jsonify({"currencies": sorted(list(rates.keys())) if rates else list(STATIC_FALLBACK.keys())})
 
 def login_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
@@ -268,18 +402,17 @@ def index():
                             if pct >= 80:
                                 send_budget_alert_email(user, budget, total_spent, pct)
             except Exception as e:
-                print(f"Error checking budget alert on add: {e}")
+                logger.error(f"Error checking budget alert on add: {e}")
 
             flash("Expense added successfully! 🎉", "success")
         except ValueError as e:
             flash(f"Invalid input: {str(e)}", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error adding expense:", e)
+            logger.error(f"Error adding expense: {e}")
             flash("Error adding expense. Please try again.", "danger")
         return redirect("/")
 
-    # Check recurring due items once per session
     if 'due_reminders_checked' not in session:
         session['due_reminders_checked'] = True
         try:
@@ -295,7 +428,7 @@ def index():
                 if due_items:
                     send_due_reminder_email(user, due_items)
         except Exception as e:
-            print(f"Error checking due recurring expenses: {e}")
+            logger.error(f"Error checking due recurring expenses: {e}")
 
     # Apply filters
     category_filter = request.args.get("category_filter", "")
@@ -590,7 +723,7 @@ def budgets():
             flash("Invalid input. Please check your data.", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error managing budget:", e)
+            logger.error(f"Error managing budget: {e}")
             flash("Error managing budget. Please try again.", "danger")
         return redirect("/budgets")
     
@@ -677,7 +810,7 @@ def savings():
             flash("Invalid input. Please check your data.", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error creating savings goal:", e)
+            logger.error(f"Error creating savings goal: {e}")
             flash("Error creating savings goal. Please try again.", "danger")
         return redirect("/savings")
     
@@ -705,11 +838,14 @@ def savings():
         total_target += target
         total_current += current
     
+    overall_progress = (total_current / total_target * 100) if total_target > 0 else 0
+    
     return render_template(
         "savings.html",
         savings_goals=goals_list,
         total_target=total_target,
-        total_current=total_current
+        total_current=total_current,
+        overall_progress=overall_progress
     )
 
 @app.route("/income", methods=["GET", "POST"])
@@ -742,7 +878,7 @@ def income():
             flash("Invalid input. Please check your data.", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error adding income:", e)
+            logger.error(f"Error adding income: {e}")
             flash("Error adding income. Please try again.", "danger")
         return redirect("/income")
     
@@ -828,7 +964,7 @@ def recurring():
             flash("Invalid input. Please check your data.", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error adding recurring expense:", e)
+            logger.error(f"Error adding recurring expense: {e}")
             flash("Error adding recurring expense. Please try again.", "danger")
         return redirect("/recurring")
     
@@ -867,7 +1003,7 @@ def delete_income(income_id):
         flash("Income record deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error deleting income:", e)
+        logger.error(f"Error deleting income: {e}")
         flash("Error deleting income record.", "danger")
     return redirect("/income")
 
@@ -883,7 +1019,7 @@ def toggle_recurring(recurring_id):
         flash(f"Recurring expense {status}!", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error toggling recurring:", e)
+        logger.error(f"Error toggling recurring: {e}")
         flash("Error updating recurring expense.", "danger")
     return redirect("/recurring")
 
@@ -898,7 +1034,7 @@ def delete_recurring(recurring_id):
         flash("Recurring expense deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error deleting recurring:", e)
+        logger.error(f"Error deleting recurring: {e}")
         flash("Error deleting recurring expense.", "danger")
     return redirect("/recurring")
 
@@ -917,7 +1053,7 @@ def update_savings(goal_id):
         flash("Savings goal updated successfully! 💰", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error updating savings goal:", e)
+        logger.error(f"Error updating savings goal: {e}")
         flash("Error updating savings goal.", "danger")
     return redirect("/savings")
 
@@ -932,7 +1068,7 @@ def delete_savings(goal_id):
         flash("Savings goal deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error deleting savings goal:", e)
+        logger.error(f"Error deleting savings goal: {e}")
         flash("Error deleting savings goal.", "danger")
     return redirect("/savings")
 
@@ -947,7 +1083,7 @@ def delete_budget(budget_id):
         flash("Budget deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error deleting budget:", e)
+        logger.error(f"Error deleting budget: {e}")
         flash("Error deleting budget.", "danger")
     return redirect("/budgets")
 
@@ -1319,7 +1455,7 @@ def clear_all():
         flash(f"Successfully cleared {count} expenses! 🗑️", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error clearing expenses:", e)
+        logger.error(f"Error clearing expenses: {e}")
         flash("Error clearing expenses. Please try again.", "danger")
     return redirect("/")
 
@@ -1363,7 +1499,7 @@ def edit_expense(expense_id):
                             if pct >= 80:
                                 send_budget_alert_email(user, budget, total_spent, pct)
             except Exception as e:
-                print(f"Error checking budget alert on edit: {e}")
+                logger.error(f"Error checking budget alert on edit: {e}")
 
             flash("Expense successfully updated! ✅", "success")
             return redirect("/")
@@ -1371,7 +1507,7 @@ def edit_expense(expense_id):
             flash("Invalid input. Please check your data.", "danger")
         except Exception as e:
             db.session.rollback()
-            print("Error updating expense:", e)
+            logger.error(f"Error updating expense: {e}")
             flash("Failed to update expense.", "danger")
     
     # Convert expense amount for display
@@ -1397,7 +1533,7 @@ def delete_expense(expense_id):
         flash("Expense successfully deleted! 🗑️", "success")
     except Exception as e:
         db.session.rollback()
-        print("Error deleting expense:", e)
+        logger.error(f"Error deleting expense: {e}")
         flash("Failed to delete expense.", "danger")
     return redirect("/")
 
@@ -1551,7 +1687,7 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
                     tips = [tip.strip() for tip in response.text.strip().split('\n') if tip.strip()]
                     return jsonify({'success': True, 'tips': tips})
             except Exception as e:
-                print(f"Tips model {model_name} failed: {str(e)}")
+                logger.warning(f"Tips model {model_name} failed: {e}")
                 if '429' in str(e) or 'RESOURCE_EXHAUSTED' in str(e):
                     time.sleep(2)
                 continue
@@ -1559,7 +1695,7 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
         return jsonify({'success': False, 'error': 'AI service busy'})
         
     except Exception as e:
-        print(f"Error generating tips: {str(e)}")
+        logger.error(f"Error generating tips: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 # AI Support API (for floating widget)
@@ -1721,7 +1857,7 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
                 except Exception as model_error:
                     last_error = model_error
                     error_str = str(model_error)
-                    print(f"Model {model_name} attempt {attempt+1} failed: {error_str}")
+                    logger.warning(f"Model {model_name} attempt {attempt+1} failed: {error_str}")
                     # If rate limited, wait before retrying the same model
                     if '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str:
                         if attempt < max_retries - 1:
@@ -1731,7 +1867,7 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
             time.sleep(1)  # Brief pause between models
         
         # All models failed
-        print(f"All models failed. Last error: {last_error}")
+        logger.warning(f"All AI models failed. Last error: {last_error}")
         error_msg = str(last_error) if last_error else 'Unknown error'
         
         # Provide user-friendly error messages
@@ -1752,50 +1888,19 @@ Keep responses concise and practical. Use emojis occasionally. Always base your 
             })
             
     except Exception as e:
-        print(f"Error in AI support: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error in AI support: {e}")
         return jsonify({
             'success': False,
             'error': 'An error occurred processing your request'
         })
 
-
 def generate_tips_on_login():
-    """Generate tips for all pages on login and store in session"""
-    # Check if API key is configured
-    if not app.config.get('GEMINI_API_KEY') or app.config['GEMINI_API_KEY'] == '':
-        print("Gemini API key not configured, using fallback tips")
-        return {
-            'budgets': [
-                'Set realistic budgets based on past spending',
-                'Review and adjust budgets monthly',
-                'Track variable expenses separately',
-                'Include savings as a budget category'
-            ],
-            'savings': [
-                'Set specific and measurable savings goals',
-                'Automate your savings with recurring transfers',
-                'Start with small amounts and increase gradually',
-                'Track your progress regularly to stay motivated'
-            ],
-            'recurring': [
-                'Review recurring expenses quarterly',
-                'Look for subscription services you no longer use',
-                'Negotiate better rates on regular bills',
-                'Set reminders before renewal dates'
-            ]
-        }
-    
-    from google.genai import types
-    import time
+    if not app.config.get('GEMINI_API_KEY'):
+        return FALLBACK_TIPS
     
     currency = get_currency()
     today = datetime.now()
-    
     tips_data = {}
-    
-    # Generate tips for each page
     pages = ['budgets', 'savings', 'recurring']
     
     for page in pages:
@@ -1874,9 +1979,7 @@ Estimated monthly cost: {currency}{total_monthly:,.2f}
 
 Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text."""
             
-            # Try models with fallback
             models_to_try = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-2.5-flash']
-            
             for model_name in models_to_try:
                 try:
                     response = client.models.generate_content(
@@ -1887,73 +1990,26 @@ Return ONLY the 4 tips, one per line, no numbering, no bullets, no extra text.""
                             max_output_tokens=300
                         )
                     )
-                    
                     if response.text:
                         tips = [tip.strip() for tip in response.text.strip().split('\n') if tip.strip()]
-                        tips_data[page] = tips[:4]  # Ensure only 4 tips
+                        tips_data[page] = tips[:4]
                         break
                 except Exception as e:
-                    print(f"Tips model {model_name} failed for {page}: {str(e)}")
+                    logger.warning(f"Tips model {model_name} failed for {page}: {e}")
                     if '429' in str(e) or 'RESOURCE_EXHAUSTED' in str(e):
                         time.sleep(2)
                     continue
             
-            # Fallback tips if AI fails
             if page not in tips_data:
-                fallback = {
-                    'budgets': [
-                        'Set realistic budgets based on past spending',
-                        'Review and adjust budgets monthly',
-                        'Track variable expenses separately',
-                        'Include savings as a budget category'
-                    ],
-                    'savings': [
-                        'Set specific and measurable savings goals',
-                        'Automate your savings with recurring transfers',
-                        'Start with small amounts and increase gradually',
-                        'Track your progress regularly to stay motivated'
-                    ],
-                    'recurring': [
-                        'Review recurring expenses quarterly',
-                        'Look for subscription services you no longer use',
-                        'Negotiate better rates on regular bills',
-                        'Set reminders before renewal dates'
-                    ]
-                }
-                tips_data[page] = fallback.get(page, [])
+                tips_data[page] = FALLBACK_TIPS.get(page, [])
         
         except Exception as e:
-            print(f"Error generating tips for {page}: {str(e)}")
-            # Use fallback
-            fallback = {
-                'budgets': [
-                    'Set realistic budgets based on past spending',
-                    'Review and adjust budgets monthly',
-                    'Track variable expenses separately',
-                    'Include savings as a budget category'
-                ],
-                'savings': [
-                    'Set specific and measurable savings goals',
-                    'Automate your savings with recurring transfers',
-                    'Start with small amounts and increase gradually',
-                    'Track your progress regularly to stay motivated'
-                ],
-                'recurring': [
-                    'Review recurring expenses quarterly',
-                    'Look for subscription services you no longer use',
-                    'Negotiate better rates on regular bills',
-                    'Set reminders before renewal dates'
-                ]
-            }
-            tips_data[page] = fallback.get(page, [])
+            logger.error(f"Error generating tips for {page}: {e}")
+            tips_data[page] = FALLBACK_TIPS.get(page, [])
     
     return tips_data
 
-# ==================== BADGE / ACHIEVEMENT SYSTEM ====================
-from models import Achievement, BADGE_CATALOG
-
 def check_and_award_badges(user_id):
-    """Check user activity and award any earned badges"""
     awarded = []
     existing = {a.badge_key for a in Achievement.query.filter_by(user_id=user_id).all()}
     
@@ -1963,17 +2019,14 @@ def check_and_award_badges(user_id):
             awarded.append(key)
             existing.add(key)
     
-    # first_expense: Logged first expense
     if Expense.query.first():
         award('first_expense')
     
-    # expense_streak_7: 7 distinct days with expenses
     from sqlalchemy import func
     distinct_days = db.session.query(func.count(func.distinct(Expense.date))).scalar() or 0
     if distinct_days >= 7:
         award('expense_streak_7')
     
-    # budget_master: any month where all budgets stayed under limit
     today = datetime.now()
     budgets = Budget.query.filter_by(month=today.month, year=today.year).all()
     if budgets:
@@ -1986,31 +2039,25 @@ def check_and_award_badges(user_id):
         if all_under:
             award('budget_master')
     
-    # savings_starter: created first savings goal
     if SavingsGoal.query.first():
         award('savings_starter')
     
-    # goal_crusher: completed a savings goal
     completed_goals = SavingsGoal.query.all()
     if any(g.is_completed for g in completed_goals):
         award('goal_crusher')
     
-    # income_diversifier: 3+ distinct income sources
     distinct_sources = db.session.query(func.count(func.distinct(Income.source))).scalar() or 0
     if distinct_sources >= 3:
         award('income_diversifier')
     
-    # big_saver: total savings >= 10000
     total_saved = sum(float(g.current_amount) for g in SavingsGoal.query.all())
     if total_saved >= 10000:
         award('big_saver')
     
-    # century_club: 100+ expenses
     expense_count = Expense.query.count()
     if expense_count >= 100:
         award('century_club')
     
-    # recurring_champion: 5+ recurring expenses
     recurring_count = RecurringExpense.query.count()
     if recurring_count >= 5:
         award('recurring_champion')
@@ -2020,41 +2067,35 @@ def check_and_award_badges(user_id):
     
     return awarded
 
-# ==================== SETTINGS PAGE ====================
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
-    """User settings page for API keys, notifications, and preferences"""
     user = User.query.get(session['user_id'])
     
     if request.method == 'POST':
-        # Update AI settings
         user.gemini_api_key = request.form.get('gemini_api_key', '')
         user.ai_personality = request.form.get('ai_personality', 'balanced')
         user.preferred_currency = request.form.get('preferred_currency', '₹')
-        
-        # Update notification preferences (checkboxes: present = True, absent = False)
         user.notify_budget_alerts = 'notify_budget_alerts' in request.form
         user.notify_due_reminders = 'notify_due_reminders' in request.form
         user.notify_monthly_digest = 'notify_monthly_digest' in request.form
         user.notify_savings_milestones = 'notify_savings_milestones' in request.form
-        
         db.session.commit()
         
-        # Apply currency preference
         set_currency(user.preferred_currency)
-        
         flash('Settings saved successfully!', 'success')
         return redirect(url_for('settings'))
     
-    # Get achievements
-    achievements = Achievement.query.filter_by(user_id=user.id).all()
-    unlocked_keys = {a.badge_key for a in achievements}
-    
-    # Check for new badges
     check_and_award_badges(user.id)
     achievements = Achievement.query.filter_by(user_id=user.id).all()
     unlocked_keys = {a.badge_key for a in achievements}
+    
+    return render_template('settings.html',
+                         user=user,
+                         achievements=achievements,
+                         unlocked_keys=unlocked_keys,
+                         badge_catalog=BADGE_CATALOG,
+                         total_badges=len(BADGE_CATALOG))
     
     return render_template('settings.html',
                          user=user,
@@ -2118,7 +2159,7 @@ Review your spending in Money Mate to stay on track.
 — Money Mate"""
         
         # Development Mode Console fallback
-        if not app.config.get('MAIL_USERNAME') or app.config['MAIL_USERNAME'] == 'your-email@gmail.com':
+        if not app.config.get('MAIL_USERNAME'):
             print("\n" + "="*60)
             print(f"📧 [DEVELOPMENT MODE] BUDGET ALERT EMAIL TO: {user.email}")
             print(f"Subject: {subject}")
@@ -2131,7 +2172,7 @@ Review your spending in Money Mate to stay on track.
         msg.body = body
         mail.send(msg)
     except Exception as e:
-        print(f"Failed to send budget alert email: {e}")
+        logger.error(f"Failed to send budget alert email: {e}")
 
 def send_due_reminder_email(user, due_items):
     """Send reminder for recurring expenses due soon"""
@@ -2152,7 +2193,7 @@ Log in to Money Mate to manage your payments.
 — Money Mate"""
         
         # Development Mode Console fallback
-        if not app.config.get('MAIL_USERNAME') or app.config['MAIL_USERNAME'] == 'your-email@gmail.com':
+        if not app.config.get('MAIL_USERNAME'):
             print("\n" + "="*60)
             print(f"📧 [DEVELOPMENT MODE] RECURRING DUE REMINDER TO: {user.email}")
             print(f"Subject: {subject}")
@@ -2165,21 +2206,31 @@ Log in to Money Mate to manage your payments.
         msg.body = body
         mail.send(msg)
     except Exception as e:
-        print(f"Failed to send due reminder email: {e}")
+        logger.error(f"Failed to send due reminder email: {e}")
 
-# Authentication routes
+# Authentication routes (Powered by Sentinel API Security Lab)
 @app.route('/login', methods=['GET', 'POST'])
 @csrf.exempt
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
         
-        user = User.query.filter_by(username=username).first()
+        if not username or not password:
+            flash('Username/Email and Password are required.', 'error')
+            return render_template('login.html')
+            
+        status, data = sentinel_login(username, password)
         
-        if user and user.check_password(password):
-            session['user_id'] = user.id
-            session['username'] = user.username
+        if status == 200 and data.get('success'):
+            user_data = data.get('user')
+            local_user = get_or_sync_local_user(user_data)
+            
+            session['user_id'] = local_user.id
+            session['username'] = local_user.username
+            session['sentinel_id'] = user_data.get('id') if user_data else None
+            session['access_token'] = data.get('accessToken')
+            session['refresh_token'] = data.get('refreshToken')
             session['login_success'] = True
             
             # Generate tips on login
@@ -2188,15 +2239,128 @@ def login():
             
             # Check and award any new badges
             try:
-                check_and_award_badges(user.id)
+                check_and_award_badges(local_user.id)
             except Exception as e:
-                print(f"Badge check error: {e}")
+                logger.error(f"Badge check error: {e}")
             
             return redirect(url_for('index'))
         else:
-            flash('Invalid username or password', 'error')
+            msg = data.get('message', 'Invalid credentials or login failed.')
+            # If email is not verified, redirect them to the verify OTP page
+            if 'not verified' in msg.lower() or 'verify' in msg.lower():
+                if '@' in username:
+                    session['pending_email'] = username
+                flash(msg, 'warning')
+                return redirect(url_for('verify_otp'))
+            else:
+                flash(msg, 'error')
     
     return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+@csrf.exempt
+def signup():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        if not username or not email or not password:
+            flash('All fields are required.', 'error')
+            return render_template('signup.html')
+            
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('signup.html')
+            
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'error')
+            return render_template('signup.html')
+            
+        status, data = sentinel_register(username, email, password)
+        
+        if status in (200, 201) and data.get('success'):
+            session['pending_email'] = email
+            session['pending_username'] = username
+            flash(data.get('message', f'Registration successful! A 6-digit OTP code has been sent to {email}.'), 'success')
+            return redirect(url_for('verify_otp'))
+        else:
+            flash(data.get('message', 'Registration failed. Please try again.'), 'error')
+            return render_template('signup.html')
+            
+    return render_template('signup.html')
+
+@app.route('/verify-otp', methods=['GET', 'POST'])
+@csrf.exempt
+def verify_otp():
+    """Verify email via Sentinel API 6-digit OTP"""
+    pending_email = session.get('pending_email', '')
+    
+    if request.method == 'POST':
+        entered_otp = request.form.get('otp', '').strip()
+        email = request.form.get('email', pending_email).strip()
+        
+        if not email:
+            flash('Email address is required for verification.', 'error')
+            return render_template('verify_otp.html', email=pending_email)
+            
+        if not entered_otp or len(entered_otp) != 6:
+            flash('Please enter a valid 6-digit OTP.', 'error')
+            return render_template('verify_otp.html', email=email)
+            
+        status, data = sentinel_verify_email(email, entered_otp)
+        
+        if status == 200 and data.get('success'):
+            user_data = data.get('user')
+            local_user = get_or_sync_local_user(user_data)
+            
+            session['user_id'] = local_user.id
+            session['username'] = local_user.username
+            session['sentinel_id'] = user_data.get('id') if user_data else None
+            session['access_token'] = data.get('accessToken')
+            session['refresh_token'] = data.get('refreshToken')
+            session['login_success'] = True
+            
+            session.pop('pending_email', None)
+            session.pop('pending_username', None)
+            
+            # Award initial badges & tips
+            try:
+                check_and_award_badges(local_user.id)
+            except Exception as e:
+                logger.error(f"Badge check error: {e}")
+                
+            tips_data = generate_tips_on_login()
+            session['ai_tips'] = tips_data
+            
+            flash('Account verified & logged in successfully! Welcome to Money Mate.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash(data.get('message', 'Invalid or expired OTP code. Please try again.'), 'error')
+            return render_template('verify_otp.html', email=email)
+            
+    return render_template('verify_otp.html', email=pending_email)
+
+@app.route('/resend-otp', methods=['GET', 'POST'])
+@csrf.exempt
+def resend_otp():
+    """Resend OTP via Sentinel API"""
+    email = request.form.get('email', request.args.get('email', session.get('pending_email', ''))).strip()
+    
+    if not email:
+        flash('Please enter your email to request a new OTP code.', 'error')
+        return redirect(url_for('verify_otp'))
+        
+    status, data = sentinel_resend_otp(email)
+    
+    if status == 200 and data.get('success'):
+        session['pending_email'] = email
+        flash(data.get('message', f'A fresh OTP has been sent to {email}.'), 'success')
+    else:
+        flash(data.get('message', 'Unable to resend OTP. Please try again later.'), 'error')
+        
+    return redirect(url_for('verify_otp'))
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
 @csrf.exempt
@@ -2230,8 +2394,7 @@ def forgot_password():
         # Send OTP via email
         try:
             # Check if email is configured
-            if app.config['MAIL_USERNAME'] == 'your-email@gmail.com' or not app.config.get('MAIL_USERNAME'):
-                # Development mode - show OTP in console instead of sending email
+            if not app.config.get('MAIL_USERNAME'):
                 print("\n" + "="*60)
                 print("🔐 DEVELOPMENT MODE - OTP FOR PASSWORD RESET")
                 print("="*60)
@@ -2242,7 +2405,7 @@ def forgot_password():
                 print("="*60 + "\n")
                 
                 flash(f'Development Mode: Check console for OTP (Email: {user.email})', 'success')
-                return redirect(url_for('verify_otp'))
+                return redirect(url_for('verify_reset_otp'))
             
             # Production mode - send actual email
             msg = Message(
@@ -2270,30 +2433,18 @@ def forgot_password():
             """
             mail.send(msg)
             flash(f'OTP sent to {user.email[:3]}***{user.email.split("@")[1]}', 'success')
-            return redirect(url_for('verify_otp'))
+            return redirect(url_for('verify_reset_otp'))
         except Exception as e:
-            print(f"Error sending email: {str(e)}")
-            
-            # Fallback to console mode if email fails
-            print("\n" + "="*60)
-            print("⚠️  EMAIL FAILED - SHOWING OTP IN CONSOLE")
-            print("="*60)
-            print(f"Username: {username}")
-            print(f"Email: {user.email}")
-            print(f"OTP Code: {otp}")
-            print(f"Valid for: 10 minutes")
-            print(f"Error: {str(e)}")
-            print("="*60 + "\n")
-            
-            flash(f'Email service unavailable. Check console for OTP (Development Mode)', 'success')
-            return redirect(url_for('verify_otp'))
+            logger.error(f"Error sending email: {e}")
+            flash('Email service unavailable. Check console for OTP (Development Mode)', 'success')
+            return redirect(url_for('verify_reset_otp'))
     
     return render_template('forgot_password.html')
 
-@app.route('/verify-otp', methods=['GET', 'POST'])
+@app.route('/verify-reset-otp', methods=['GET', 'POST'])
 @csrf.exempt
-def verify_otp():
-    """Step 2: Verify OTP"""
+def verify_reset_otp():
+    """Verify OTP for Password Reset"""
     if 'reset_username' not in session:
         flash('Please start the password reset process', 'error')
         return redirect(url_for('forgot_password'))
@@ -2312,7 +2463,6 @@ def verify_otp():
                 return redirect(url_for('forgot_password'))
         
         if entered_otp == session.get('reset_otp'):
-            # OTP verified, allow password reset
             session['otp_verified'] = True
             return redirect(url_for('reset_password'))
         else:
@@ -2365,40 +2515,10 @@ def reset_password():
     
     return render_template('reset_password.html')
 
-@app.route('/signup', methods=['GET', 'POST'])
-@csrf.exempt
-def signup():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        
-        if password != confirm_password:
-            flash('Passwords do not match', 'error')
-            return render_template('signup.html')
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'error')
-            return render_template('signup.html')
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists', 'error')
-            return render_template('signup.html')
-        
-        new_user = User(username=username, email=email)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-        
-        flash('Account created successfully! Please login.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('signup.html')
-
 @app.route('/logout')
 def logout():
     session.clear()
+    flash('You have been logged out successfully.', 'info')
     return redirect(url_for('login'))
 
 with app.app_context():

@@ -299,7 +299,7 @@
                         <span class="input-group-text bg-transparent border-end-0">
                             <i class="fas fa-user text-white-50"></i>
                         </span>
-                        <input type="text" name="username" class="form-control border-start-0" placeholder="Username" required>
+                        <input type="text" name="username" class="form-control border-start-0" placeholder="Username or Email" required>
                     </div>
                 </div>
                 
@@ -313,18 +313,27 @@
                 </div>
                 
                 <button type="submit" class="btn btn-login" id="loginBtn">
-                    <i class="fas fa-sign-in-alt me-2" id="loginIcon"></i><span id="loginText">Login</span>
+                    <i class="fas fa-shield-alt me-2" id="loginIcon"></i><span id="loginText">Secure Login</span>
                 </button>
             </form>
             
-            <div class="text-center mt-3">
-                <a href="{{ url_for('forgot_password') }}" style="color: #8891a8; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;">
+            <div class="d-flex justify-content-between align-items-center mt-3" style="font-size: 0.9rem;">
+                <a href="{{ url_for('verify_otp') }}" style="color: #4dabf7; text-decoration: none;">
+                    <i class="fas fa-check-circle me-1"></i>Verify OTP
+                </a>
+                <a href="{{ url_for('forgot_password') }}" style="color: #8891a8; text-decoration: none;">
                     <i class="fas fa-key me-1"></i>Forgot Password?
                 </a>
             </div>
             
             <div class="signup-link">
                 Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a>
+            </div>
+
+            <div class="text-center mt-4 pt-3 border-top border-secondary border-opacity-25">
+                <span class="badge rounded-pill bg-dark border border-info border-opacity-25 text-info px-3 py-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <i class="fas fa-shield-halved me-1 text-info"></i> SECURED BY SENTINEL API
+                </span>
             </div>
         </div>
     </div>

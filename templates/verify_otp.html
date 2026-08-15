@@ -215,28 +215,62 @@
 
             <div class="info-box">
                 <i class="fas fa-envelope-open-text"></i>
-                <p>Check your email inbox for the OTP code</p>
+                <p>
+                    {% if email %}
+                        Enter the 6-digit code sent to<br><strong class="text-white">{{ email }}</strong>
+                    {% else %}
+                        Enter the 6-digit code sent to your registered email
+                    {% endif %}
+                </p>
             </div>
 
-            <form method="POST">
+            <form method="POST" action="{{ url_for('verify_otp') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                {% if not email %}
+                <div class="mb-3">
+                    <input type="email" 
+                           name="email" 
+                           class="form-control text-center py-2" 
+                           placeholder="Enter your email address" 
+                           required>
+                </div>
+                {% else %}
+                <input type="hidden" name="email" value="{{ email }}">
+                {% endif %}
+
                 <input type="text" 
                        name="otp" 
-                       class="otp-input" 
-                       placeholder="Enter 6-digit OTP" 
+                       class="otp-input mb-3" 
+                       placeholder="• • • • • •" 
                        maxlength="6" 
                        pattern="[0-9]{6}"
                        required 
                        autofocus
                        inputmode="numeric">
                 
-                <button type="submit" class="btn btn-submit">
-                    <i class="fas fa-check-circle me-2"></i>Verify OTP
+                <button type="submit" class="btn btn-submit w-100 py-3" style="background: linear-gradient(135deg, #00d9b8 0%, #4dabf7 100%); border: none; border-radius: 12px; font-weight: 700; color: #0a0e1a; font-size: 1.05rem;">
+                    <i class="fas fa-shield-check me-2"></i>Verify & Activate Account
                 </button>
             </form>
             
-            <div class="back-link">
-                <a href="{{ url_for('forgot_password') }}"><i class="fas fa-arrow-left me-2"></i>Request New OTP</a>
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2">
+                <a href="{{ url_for('login') }}" class="text-secondary text-decoration-none" style="font-size: 0.9rem;">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Login
+                </a>
+                <form method="POST" action="{{ url_for('resend_otp') }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="email" value="{{ email or '' }}">
+                    <button type="submit" class="btn btn-link p-0 text-info text-decoration-none" style="font-size: 0.9rem; font-weight: 600;">
+                        <i class="fas fa-rotate-right me-1"></i>Resend Code
+                    </button>
+                </form>
+            </div>
+
+            <div class="text-center mt-4 pt-3 border-top border-secondary border-opacity-25">
+                <span class="badge rounded-pill bg-dark border border-info border-opacity-25 text-info px-3 py-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <i class="fas fa-shield-halved me-1 text-info"></i> SECURED BY SENTINEL API
+                </span>
             </div>
         </div>
     </div>

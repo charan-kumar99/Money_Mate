@@ -36,7 +36,7 @@
                         <div class="progress mb-2" style="height: 12px;">
                             <div class="progress-bar bg-{{ budget.status }}" 
                                  role="progressbar" 
-                                 style="width: {{ budget.percentage }}%"
+                                 style="--progress-width: {{ budget.percentage }}%; width: var(--progress-width);"
                                  aria-valuenow="{{ budget.percentage }}" 
                                  aria-valuemin="0" 
                                  aria-valuemax="100">
